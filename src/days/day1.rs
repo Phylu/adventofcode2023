@@ -3,7 +3,7 @@ pub fn tasks(content: &String) {
     task2(content);
 }
 
-pub fn task1(content: &String) {
+fn task1(content: &String) {
 
     let mut max = 0;
     let mut current = 0;
@@ -28,7 +28,7 @@ pub fn task1(content: &String) {
 
 }
 
-pub fn task2(content: &String) {
+fn task2(content: &String) {
 
     let mut vec = Vec::new();
     let mut current = 0;

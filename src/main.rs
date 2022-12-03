@@ -17,6 +17,7 @@ fn main() {
     let tasks = match &args.day {
         &1 => days::day1::tasks,
         &2 => days::day2::tasks,
+        &3 => days::day3::tasks,
         _ => empty,
     };
 

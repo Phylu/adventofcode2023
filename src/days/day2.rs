@@ -3,7 +3,7 @@ pub fn tasks(content: &String) {
     task2(content);
 }
 
-pub fn task1(content: &String) {
+fn task1(content: &String) {
 
     let mut points = 0;
     let mut game: Vec<&str>;
@@ -37,7 +37,7 @@ pub fn task1(content: &String) {
     println!("{}", points);
 }
 
-pub fn task2(content: &String) {
+fn task2(content: &String) {
 
     let mut points = 0;
     let mut game: Vec<&str>;
