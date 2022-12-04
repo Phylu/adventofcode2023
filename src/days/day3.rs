@@ -6,6 +6,40 @@ pub fn tasks(content: &String) -> (i32, i32) {
     return (result1, result2);
 }
 
+fn task1(content: &String)  -> i32 {
+
+    let mut points = 0;
+    
+    for line in content.lines() {
+        let (split1, split2) = line.split_at(line.len() / 2);
+        let dup = duplicate(split1, split2);
+        points += calculate_points(dup);
+    }
+
+    return points;
+}
+
+fn task2(content: &String) -> i32 {
+
+    let mut points = 0;
+    let mut team = vec![];
+
+    for line in content.lines() {
+        
+        team.push(line);
+        
+        if team.len() == 3 {
+            let dup = duplicate3(team[0], team[1], team[2]);
+            points += calculate_points(dup);
+
+            team = vec![] // Reset the team after 3 elves
+        }
+
+    }
+
+    return points;
+}
+
 fn duplicate(split1: &str, split2: &str) -> char {
 
     let sorted1 = split1.chars().sorted();
@@ -97,43 +131,6 @@ fn calculate_points(character: char) -> i32 {
     };
 
     return uppercase_points + current_points;
-}
-
-fn task1(content: &String)  -> i32 {
-
-    let mut points = 0;
-    
-    for line in content.lines() {
-
-        let (split1, split2) = line.split_at(line.len() / 2);
-        let dup = duplicate(split1, split2);
-        points += calculate_points(dup);
-
-    }
-
-    return points;
-}
-
-fn task2(content: &String) -> i32 {
-
-    let mut points = 0;
-
-    let mut team = vec![];
-    for line in content.lines() {
-        
-        team.push(line);
-
-        if team.len() == 3 {
-
-            let dup = duplicate3(team[0], team[1], team[2]);
-
-            points += calculate_points(dup);
-
-            team = vec![] // Reset the team after 3 elves
-        }
-    }
-
-    return points;
 }
 
 #[test]

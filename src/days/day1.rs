@@ -6,33 +6,26 @@ pub fn tasks(content: &String) -> (i32, i32) {
 
 fn task1(content: &String) -> i32 {
 
-    let mut max = 0;
-    let mut current = 0;
+    let vec = prepare_input(content);
 
-    for line in content.lines() {
-        if line == "" {
-            if current > max {
-                max = current;
-            }
-            current = 0;
-        } else {
-            let number : i32 = line.parse().unwrap();
-            current += number;
-        }
-    }
-
-    if current > max {
-        max = current;
-    }  
-
-    return max;
-
+    return vec[vec.len()-1];
 }
 
 fn task2(content: &String) -> i32 {
 
-    let mut vec = Vec::new();
+    let vec = prepare_input(content);
+
+    let top3 = &vec[vec.len()-3..vec.len()];
+    let sum: i32 = top3.iter().sum();
+
+    return sum;
+
+}
+
+fn prepare_input(content: &String) -> Vec<i32> {
+
     let mut current = 0;
+    let mut vec = Vec::new();
 
     for line in content.lines() {
         if line == "" {
@@ -44,13 +37,9 @@ fn task2(content: &String) -> i32 {
         }
     }
     vec.push(current);
+    
     vec.sort();
-
-    let top3 = &vec[vec.len()-3..vec.len()];
-    let sum: i32 = top3.iter().sum();
-
-    return sum;
-
+    return vec;
 }
 
 #[test]
