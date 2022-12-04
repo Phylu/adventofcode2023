@@ -3,7 +3,7 @@ pub fn tasks(content: &String) {
     task2(content);
 }
 
-fn task1(content: &String) {
+fn task1(content: &String) -> i32 {
 
     let mut points = 0;
     
@@ -26,9 +26,10 @@ fn task1(content: &String) {
     }
 
     println!("{}", points);
+    return points;
 }
 
-fn task2(content: &String) {
+fn task2(content: &String) -> i32 {
 
     let mut points = 0;
 
@@ -50,4 +51,17 @@ fn task2(content: &String) {
     }
 
     println!("{}", points);
+    return points;
+}
+
+#[test]
+fn test_task1() {
+    let content = std::fs::read_to_string("input/4.txt").unwrap(); 
+    assert_eq!(task1(&content), 433);
+}
+
+#[test]
+fn test_task2() {
+    let content = std::fs::read_to_string("input/4.txt").unwrap(); 
+    assert_eq!(task2(&content), 852);
 }

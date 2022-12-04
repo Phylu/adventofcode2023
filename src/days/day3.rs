@@ -98,7 +98,7 @@ fn calculate_points(character: char) -> i32 {
     return uppercase_points + current_points;
 }
 
-fn task1(content: &String) {
+fn task1(content: &String)  -> i32 {
 
     let mut points = 0;
     
@@ -111,9 +111,10 @@ fn task1(content: &String) {
     }
 
     println!("{}", points);
+    return points;
 }
 
-fn task2(content: &String) {
+fn task2(content: &String) -> i32 {
 
     let mut points = 0;
 
@@ -133,4 +134,17 @@ fn task2(content: &String) {
     }
 
     println!("{}", points);
+    return points;
+}
+
+#[test]
+fn test_task1() {
+    let content = std::fs::read_to_string("input/3.txt").unwrap(); 
+    assert_eq!(task1(&content), 7727);
+}
+
+#[test]
+fn test_task2() {
+    let content = std::fs::read_to_string("input/3.txt").unwrap(); 
+    assert_eq!(task2(&content), 2609);
 }
