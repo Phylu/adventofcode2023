@@ -18,6 +18,7 @@ fn main() {
         &1 => days::day1::tasks,
         &2 => days::day2::tasks,
         &3 => days::day3::tasks,
+        &4 => days::day4::tasks,
         _ => empty,
     };
 
