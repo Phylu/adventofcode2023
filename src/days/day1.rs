@@ -1,6 +1,7 @@
-pub fn tasks(content: &String) {
-    task1(content);
-    task2(content);
+pub fn tasks(content: &String) -> (i32, i32) {
+    let result1 = task1(content);
+    let result2 = task2(content);
+    return (result1, result2);
 }
 
 fn task1(content: &String) -> i32 {
@@ -24,7 +25,6 @@ fn task1(content: &String) -> i32 {
         max = current;
     }  
 
-    println!("{}", max);
     return max;
 
 }
@@ -49,7 +49,6 @@ fn task2(content: &String) -> i32 {
     let top3 = &vec[vec.len()-3..vec.len()];
     let sum: i32 = top3.iter().sum();
 
-    println!("{}", sum);
     return sum;
 
 }

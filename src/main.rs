@@ -6,8 +6,9 @@ struct Cli {
     day: i32,
 }
 
-fn empty(_content: &String){
+fn empty(_content: &String) -> (i32, i32) {
     println!("This day has not yet been implemented!");
+    return (0, 0)
 }
 
 fn main() {
@@ -22,5 +23,8 @@ fn main() {
         _ => empty,
     };
 
-    tasks(&content);
+    let (result1, result2) = tasks(&content);
+    println!("The results for day {} are:", &args.day);
+    println!("Task 1: {}", result1);
+    println!("Task 2: {}", result2);
 }
