@@ -1,12 +1,12 @@
 use itertools::Itertools;
 
-pub fn tasks(content: &String) -> (i32, i32) {
+pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
     let result2 = task2(content);
     return (result1, result2);
 }
 
-fn task1(content: &String)  -> i32 {
+fn task1(content: &String)  -> String {
 
     let mut points = 0;
     
@@ -16,10 +16,10 @@ fn task1(content: &String)  -> i32 {
         points += calculate_points(dup);
     }
 
-    return points;
+    return points.to_string();
 }
 
-fn task2(content: &String) -> i32 {
+fn task2(content: &String) -> String {
 
     let mut points = 0;
     let mut team = vec![];
@@ -27,7 +27,7 @@ fn task2(content: &String) -> i32 {
     for line in content.lines() {
         
         team.push(line);
-        
+
         if team.len() == 3 {
             let dup = duplicate3(team[0], team[1], team[2]);
             points += calculate_points(dup);
@@ -37,7 +37,7 @@ fn task2(content: &String) -> i32 {
 
     }
 
-    return points;
+    return points.to_string();
 }
 
 fn duplicate(split1: &str, split2: &str) -> char {
@@ -136,11 +136,11 @@ fn calculate_points(character: char) -> i32 {
 #[test]
 fn test_task1() {
     let content = std::fs::read_to_string("input/3.txt").unwrap(); 
-    assert_eq!(task1(&content), 7727);
+    assert_eq!(task1(&content), "7727");
 }
 
 #[test]
 fn test_task2() {
     let content = std::fs::read_to_string("input/3.txt").unwrap(); 
-    assert_eq!(task2(&content), 2609);
+    assert_eq!(task2(&content), "2609");
 }

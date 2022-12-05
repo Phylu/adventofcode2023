@@ -1,3 +1,5 @@
+
+use std::process;
 use clap::Parser;
 mod days;
 
@@ -6,9 +8,9 @@ struct Cli {
     day: i32,
 }
 
-fn empty(_content: &String) -> (i32, i32) {
+fn empty(_content: &String) -> (String, String) {
     println!("This day has not yet been implemented!");
-    return (0, 0)
+    process::exit(1);
 }
 
 fn main() {
@@ -20,6 +22,7 @@ fn main() {
         &2 => days::day2::tasks,
         &3 => days::day3::tasks,
         &4 => days::day4::tasks,
+        &5 => days::day5::tasks,
         _ => empty,
     };
 
