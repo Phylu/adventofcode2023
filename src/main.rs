@@ -23,6 +23,7 @@ fn main() {
         &3 => days::day3::tasks,
         &4 => days::day4::tasks,
         &5 => days::day5::tasks,
+        &6 => days::day6::tasks,
         _ => empty,
     };
 
