@@ -1,28 +1,24 @@
 use std::{cell::RefCell, rc::Rc};
-
 use regex::Regex;
 
 const COMMAND: &str = r"^\$\s(?P<command>\S+)\s?(?P<path>\S+)?";
-const DIRECTORY: &str = r"^dir\s(?P<directory>\S+)";
 const FILE: &str = r"^(?P<size>\d+)\s(?P<filename>\S+)";
 
 enum COMMANDS {
     CD,
-    LS,
 }
 
 impl COMMANDS {
     fn equals(&self, command: &str) -> bool {
         match self {
-            COMMANDS::CD => if command == "cd" { true } else { false },
-            COMMANDS::LS => if command == "ls" { true } else { false }
+            COMMANDS::CD => if command == "cd" { true } else { false }
         }
 
     }
 }
 
 struct Directory {
-    name: String,
+    _name: String,
     parent: Option<Rc<RefCell<Directory>>>,
     children: Vec<Rc<RefCell<Directory>>>,
     size: u32,
@@ -31,7 +27,7 @@ struct Directory {
 impl Directory {
     fn new(name: String) -> Directory {
         Directory {
-            name: name,
+            _name: name,
             parent: None,
             children: vec![],
             size: 0,
@@ -47,7 +43,7 @@ pub fn tasks(content: &String) -> (String, String) {
 
 fn task1(content: &String) -> String {
     let parent = prepare_input(content);
-    get_result(&parent).to_string()
+    get_small_dirs(&parent).to_string()
 }
 
 fn task2(content: &String) -> String {
@@ -61,10 +57,17 @@ fn prepare_input(content: &String) -> Rc<RefCell<Directory>> {
     let root = Rc::new(RefCell::new(Directory::new(String::from("/"))));
     let mut current_dir = Rc::clone(&root);
 
+    current_dir = read_input(content, current_dir);
+    finalize_input(current_dir);
+
+    root
+}
+
+fn read_input(content: &String, mut current_dir: Rc<RefCell<Directory>>) -> Rc<RefCell<Directory>> {
+    
     for line in content.lines() {
 
         let command_re : Regex = Regex::new(COMMAND).unwrap();
-        let directory_re : Regex = Regex::new(DIRECTORY).unwrap();
         let file_re : Regex = Regex::new(FILE).unwrap();
         
         // Handling a command
@@ -74,47 +77,29 @@ fn prepare_input(content: &String) -> Rc<RefCell<Directory>> {
 
             if COMMANDS::CD.equals(&command) {
                 let path = String::from(&captures["path"]);
-                //println!("Moving into directory: {}", path);
 
                 if path == "/" {
                     // Empty, as parent directory has already been created
                 } else if path == ".." {
-                    let current_clone = Rc::clone(&current_dir);
-                    let current_size = current_dir.borrow().size;
-
-                    current_dir = Rc::clone(current_clone.borrow().parent.as_ref().unwrap());
-                    current_dir.borrow_mut().size += current_size;
+                    current_dir = move_up(Rc::clone(&current_dir));
                 } else {
-                    let next_dir = Rc::new(RefCell::new(Directory::new(path)));
-                    current_dir.borrow_mut().children.push(Rc::clone(&next_dir));
-                    {
-                        let mut mut_next = next_dir.borrow_mut();
-                        mut_next.parent = Some(Rc::clone(&current_dir));
-                    }
-                    current_dir = next_dir;
+                    current_dir = move_down(Rc::clone(&current_dir), path);
                 }
 
-            } else if COMMANDS::LS.equals(&command) {
-                //println!("Listing directory: {}", current_dir.borrow().name);
             }
 
-        } else if directory_re.is_match(line) {
-            // We can skip this for now
-        
         } else if file_re.is_match(line) {
             let captures = file_re.captures(line).unwrap();
             let size: u32 = String::from(&captures["size"]).parse().unwrap();
-            //let filename = String::from(&captures["filename"]);
 
             current_dir.borrow_mut().size += size;
-
-            //println!("File {} has size {}", filename, size);
         }
-
-        //let c = current_dir.borrow();
-        //println!("Directory {} has size {}", c.name, c.size);
-
     }
+
+    current_dir
+}
+
+fn finalize_input(mut current_dir: Rc<RefCell<Directory>>) -> Rc<RefCell<Directory>> {
 
     // Move up and store sizes
     loop {
@@ -130,18 +115,37 @@ fn prepare_input(content: &String) -> Rc<RefCell<Directory>> {
         }
     }
 
-    //let r = Rc::clone(&root);
-    //println!("Root has size: {} ", r.borrow().size);
+    current_dir
 
-    return root;
 }
 
-fn get_result(parent: &Rc<RefCell<Directory>>) -> u32 {
+fn move_up(mut current_dir: Rc<RefCell<Directory>>) -> Rc<RefCell<Directory>> {
+    let current_clone = Rc::clone(&current_dir);
+    let current_size = current_dir.borrow().size;
+
+    current_dir = Rc::clone(current_clone.borrow().parent.as_ref().unwrap());
+    current_dir.borrow_mut().size += current_size;
+
+    current_dir
+}
+
+fn move_down(current_dir: Rc<RefCell<Directory>>, path: String) -> Rc<RefCell<Directory>> {
+    let next_dir = Rc::new(RefCell::new(Directory::new(path)));
+    current_dir.borrow_mut().children.push(Rc::clone(&next_dir));
+    {
+        let mut mut_next = next_dir.borrow_mut();
+        mut_next.parent = Some(Rc::clone(&current_dir));
+    }
+
+    next_dir
+}
+
+fn get_small_dirs(parent: &Rc<RefCell<Directory>>) -> u32 {
     let mut result : u32 = 0;
 
     result += get_small_enough(&parent);
     for child in &parent.borrow().children {
-        result += get_result(child);
+        result += get_small_dirs(child);
     }
 
     result
