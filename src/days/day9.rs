@@ -1,122 +1,10 @@
 use itertools::Itertools;
-use log::{debug, error, info, trace};
-use grid::*;
+use log::{debug, error};
 
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
     let result2 = task2(content);
     return (result1, result2);
-}
-
-fn task1(content: &String) -> String {
-
-    let grid = construt_grid(content);
-    count_visited(grid).to_string()
-
-}
-
-fn task2(content: &String) -> String {
-
-    let tail_history = play_snake(content);
-    count_tail_history(tail_history).to_string()
-
-}
-
-fn construt_grid(content : &String) -> Grid<bool> {
-    let mut head_row = 0;
-    let mut head_column = 0;
-    let mut tail_row = 0;
-    let mut tail_column = 0;
-
-    // Initialize the grid where the tail visited the starting position
-    let mut grid = grid![[true]];
-
-    for line in content.lines() {
-        let (direction, steps_str) = line.split_once(" ").unwrap();
-        let steps: usize = steps_str.parse().unwrap();
-
-        for _step in 0..steps {
-            match direction {
-                "R" => {
-                    debug!("Moving Right");
-                    head_column += 1;
-                    if head_column >= grid.cols() {
-                        grid.push_col(vec![false; grid.rows()]);
-                    }
-                    (tail_row, tail_column) = follow_right(head_row, head_column, tail_row, tail_column);
-                },
-                "L" => {
-                    debug!("Moving Left");
-                    if head_column == 0 {
-                        debug!("Adding a new column to the left and moving head and tail position accordingly.");
-                        grid.insert_col(0, vec![false; grid.rows()]);
-                        head_column += 1;
-                        tail_column += 1;
-                    }
-                    head_column -= 1;
-                    (tail_row, tail_column) = follow_left(head_row, head_column, tail_row, tail_column);
-                },
-                "U" => {
-                    debug!("Moving Up");
-                    head_row += 1;
-                    if head_row >= grid.rows() {
-                        grid.push_row(vec![false; grid.cols()]);
-                    }
-                    (tail_row, tail_column) = follow_up(head_row, head_column, tail_row, tail_column);
-                },
-                "D" => {
-                    debug!("Moving Down");
-                    if head_row == 0 {
-                        debug!("Adding a new row to the bottom and moving head and tail position accordingly.");
-                        grid.insert_row(0, vec![false; grid.cols()]);
-                        head_row += 1;
-                        tail_row += 1;
-                    }
-                    head_row -= 1;
-                    (tail_row, tail_column) = follow_down(head_row, head_column, tail_row, tail_column);
-                },
-                _ => {
-                    error!("This should never hapen!");
-                },
-            }
-            grid[tail_row][tail_column] = true;
-            trace!("{:?}", grid);
-        } 
-    }
-
-    grid
-}
-
-fn follow_up(head_row: usize, head_column: usize, mut tail_row: usize, mut tail_column: usize)  -> (usize, usize) {
-    if head_row > tail_row + 1 {
-        tail_row = head_row - 1;
-        tail_column = head_column;
-    }
-    (tail_row, tail_column)
-}
-
-fn follow_down(head_row: usize, head_column: usize, mut tail_row: usize, mut tail_column: usize)  -> (usize, usize) {
-    if head_row + 1 < tail_row {
-        tail_row = head_row + 1;
-        tail_column = head_column;
-    }
-    (tail_row, tail_column)
-}
-
-fn follow_right(head_row: usize, head_column: usize, mut tail_row: usize, mut tail_column: usize)  -> (usize, usize) {
-    if head_column > tail_column + 1 {
-        tail_column = head_column - 1;
-        tail_row = head_row;
-    }
-    (tail_row, tail_column)
-}
-
-fn follow_left(head_row: usize, head_column: usize, mut tail_row: usize, mut tail_column: usize)  -> (usize, usize) {
-    if head_column + 1 < tail_column {
-        tail_column = head_column + 1;
-        tail_row = head_row;
-    }
-    (tail_row, tail_column)
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -125,17 +13,23 @@ struct Knot {
     column: i32,
 }
 
-fn play_snake(content : &String) -> Vec<(i32, i32)> {
+fn task1(content: &String) -> String {
+    let tail_history = play_snake(content, 2);
+    count_tail_history(tail_history).to_string()
+}
+
+fn task2(content: &String) -> String {
+    let tail_history = play_snake(content, 10);
+    count_tail_history(tail_history).to_string()
+}
+
+fn play_snake(content : &String, snake_length: usize) -> Vec<(i32, i32)> {
     let mut tail_history: Vec<(i32, i32)> = vec![];
 
     // Create a rope as array from head to tail
-    let mut rope: [Knot; 10] = [Knot { row: 0, column: 0}; 10];
-
-    // Initialize the grid where the tail visited the starting position
-    let mut grid = grid![[true]];
+    let mut rope: Vec<Knot> = vec![Knot { row: 0, column: 0}; snake_length];
 
     for line in content.lines() {
-        println!("{}", line);
         let (direction, steps_str) = line.split_once(" ").unwrap();
         let steps: usize = steps_str.parse().unwrap();
 
@@ -163,11 +57,11 @@ fn play_snake(content : &String) -> Vec<(i32, i32)> {
             }
             
             rope = follow(rope);
-            tail_history.push((rope[9].row, rope[9].column));
-            // print_rope(grid.rows(), grid.cols(), rope);
+            tail_history.push((rope[rope.len() - 1].row, rope[rope.len() - 1].column));
         } 
     }
-
+    
+    print_rope(&rope, &tail_history);
     tail_history
 }
 
@@ -179,9 +73,9 @@ fn move_knot (knot: Knot, row: i32, column: i32) -> Knot {
     }
 }
 
-fn follow(mut rope: [Knot; 10]) -> [Knot; 10] {
+fn follow(mut rope: Vec<Knot>) -> Vec<Knot> {
     // Work on all knots except the first one as it is already moved
-    for i in 1..10 {
+    for i in 1..rope.len() {
         let row_change = rope[i - 1].row - rope[i].row;
         let column_change = rope[i - 1].column - rope[i].column;
 
@@ -198,10 +92,13 @@ fn follow(mut rope: [Knot; 10]) -> [Knot; 10] {
     rope
 }
 
-fn print_rope (rows: usize, cols: usize, rope: [Knot; 10]) {
-    for row in (0..10).rev() {
-        print!("{} ", row);
-        for column in 0..10 {
+fn print_rope (rope: &Vec<Knot>, tail_history: &Vec<(i32, i32)>) {
+    // Configure printing grid
+    let rows = 250;
+    let cols = 250;
+
+    for row in ((-rows/2)..(rows/2)).rev() {
+        for column in (-cols/2)..(cols/2) {
             let mut printed = false;
             for i in 0..rope.len() {
                 if rope[i].column == column && rope[i].row == row {
@@ -211,25 +108,18 @@ fn print_rope (rows: usize, cols: usize, rope: [Knot; 10]) {
                 }
             }
             if !printed {
+                if tail_history.contains(&(row, column)) {
+                    print!("x");
+                    printed = true;
+                }
+            }
+            if !printed {
                 print!(".");
             }
         }
         println!();
     }
     println!();
-}
-
-fn count_visited(grid: Grid<bool>) -> usize {
-
-    let mut result = 0;
-
-    for field in grid.iter() {
-        if *field {
-            result += 1;
-        }
-    }
-
-    result
 }
 
 fn count_tail_history(tail_history: Vec<(i32, i32)>) -> i32 {
@@ -269,11 +159,11 @@ U 20
 
 #[test]
 fn test_task1() {
-   // assert_eq!(task1(&test_input()), "13");
+   assert_eq!(task1(&test_input()), "13");
 }
 
 #[test]
 fn test_task2() {
-    //assert_eq!(task2(&test_input()), "2");
+    assert_eq!(task2(&test_input()), "1");
     assert_eq!(task2(&test_input2()), "36");
 }
