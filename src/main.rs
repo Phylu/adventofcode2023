@@ -31,6 +31,7 @@ fn main() {
         &6 => days::day6::tasks,
         &7 => days::day7::tasks,
         &8 => days::day8::tasks,
+        &9 => days::day9::tasks,
         _ => empty,
     };
 
