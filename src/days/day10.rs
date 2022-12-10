@@ -75,6 +75,7 @@ impl Command {
     }
 
     fn run(self, state: State) -> State {
+        // Let's move the state into the function for this to work properly
         let mut this_state = state;
 
         for _ in 0..self.ticks {
