@@ -8,13 +8,13 @@ pub fn tasks(content: &String) -> (String, String) {
 
 #[derive(Clone, Debug)]
 struct Monkey {
-    items: Vec<i32>,
+    items: Vec<i64>,
     operator: Operator,
-    operation_arg: i32,
-    test_divisor: i32,
+    operation_arg: i64,
+    test_divisor: i64,
     success_monkey: usize,
     failure_monkey: usize,
-    inspections: i32,
+    inspections: i64,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -26,7 +26,7 @@ enum Operator {
 
 impl Monkey {
 
-    fn operate_and_test(&mut self) -> (i32, usize) {
+    fn operate_and_test(&mut self, worry_reduction: bool, common_divisor: i64) -> (i64, usize) {
         self.inspections += 1;
         let mut worry = self.items.pop().unwrap();
 
@@ -38,7 +38,11 @@ impl Monkey {
             worry *= worry;
         }
 
-        worry /= 3;
+        if worry_reduction {
+            worry /= 3;
+        } else {
+            worry %= common_divisor;
+        }
 
         let recipient_monkey = if (worry % self.test_divisor) == 0 { self.success_monkey } else { self.failure_monkey};
 
@@ -48,33 +52,17 @@ impl Monkey {
 
 
 fn task1(content: &String) -> String {
-    let mut monkeys: Vec<Monkey> = read_input(content);
-
-    // 20 Rounds
-    for _round in 0..20 {
-
-        for i in 0..monkeys.len() {
-            while monkeys[i].items.len() > 0 {
-                let (worry, recipient_monkey) = monkeys[i].operate_and_test();
-                monkeys[recipient_monkey].items.push(worry);
-            }
-        }
-
-    }
-
-    let mut inspections: Vec<i32> = vec![];
-    for i in 0..monkeys.len() {
-        inspections.push(monkeys[i].inspections);
-    }
-
-    inspections.sort();
-    let result = inspections[inspections.len() - 2] * inspections[inspections.len() - 1];
-
-    result.to_string()
+    let monkeys: Vec<Monkey> = read_input(content);
+    calculate_result(monkeys, 20, true, 1)
 }
 
 fn task2(content: &String) -> String {
-    String::from("")
+    let monkeys: Vec<Monkey> = read_input(content);
+    let mut common_divisor = 1;
+    for i in 0..monkeys.len() {
+        common_divisor *= monkeys[i].test_divisor;
+    }
+    calculate_result(monkeys, 10000, false, common_divisor)
 }
 
 fn read_input(content: &String) -> Vec<Monkey> {
@@ -82,7 +70,7 @@ fn read_input(content: &String) -> Vec<Monkey> {
 
     for monkey_block in content.split("\n\n") {
 
-        let mut items: Vec<i32> = vec![];
+        let mut items: Vec<i64> = vec![];
         let mut operator: Operator = Operator::Add;
         let mut operation_arg = 1;
         let mut test_divisor = 1;
@@ -102,7 +90,7 @@ fn read_input(content: &String) -> Vec<Monkey> {
             if title.contains("Starting items") {
                 println!("Starting Items");
                 for item in value.split(", ") {
-                    let this_item : i32 = item.parse().unwrap()   ;
+                    let this_item : i64 = item.parse().unwrap()   ;
                     items.push(this_item);
                 }
             }
@@ -141,9 +129,32 @@ fn read_input(content: &String) -> Vec<Monkey> {
         monkeys.push(monkey);
     }
 
-    println!("{:?}", monkeys);
 
     monkeys
+}
+
+fn calculate_result(mut monkeys: Vec<Monkey>, rounds: i32, worry_reduction: bool, common_divisor: i64) -> String {
+        // 20 Rounds
+        for _round in 0..rounds {
+
+            for i in 0..monkeys.len() {
+                while monkeys[i].items.len() > 0 {
+                    let (worry, recipient_monkey) = monkeys[i].operate_and_test(worry_reduction, common_divisor);
+                    monkeys[recipient_monkey].items.push(worry);
+                }
+            }
+    
+        }
+    
+        let mut inspections: Vec<i64> = vec![];
+        for i in 0..monkeys.len() {
+            inspections.push(monkeys[i].inspections);
+        }
+    
+        inspections.sort();
+        let result:i64 = inspections[inspections.len() - 2] * inspections[inspections.len() - 1];
+    
+        result.to_string()
 }
 
 #[cfg(test)]
@@ -177,21 +188,12 @@ Monkey 3:
     If false: throw to monkey 1"#)
 }
 
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(r#"
-
-"#)
-}
-
 #[test]
 fn test_task1() {
     assert_eq!(task1(&test_input()), "10605");
-   //assert_eq!(task1(&test_input2()), "");
 }
 
 #[test]
 fn test_task2() {
-    //assert_eq!(task2(&test_input()), "");
-    //assert_eq!(task2(&test_input2()), "");
+    assert_eq!(task2(&test_input()), "2713310158");
 }
