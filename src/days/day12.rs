@@ -1,5 +1,4 @@
 use grid::{Grid, grid};
-use log::{debug, error};
 use pathfinding::prelude::dijkstra;
 
 pub fn tasks(content: &String) -> (String, String) {
@@ -53,12 +52,23 @@ impl Node {
 fn task1(content: &String) -> String {
     
     let (map, start, finish) = parse_input(content);
-    let result = dijkstra(&start, |n | n.neighbours(&map), |n| *n == finish).unwrap();
+    let result = dijkstra(&start[0], |n | n.neighbours(&map), |n| *n == finish).unwrap();
     String::from(result.1.to_string())
 }
 
 fn task2(content: &String) -> String {
-    String::from("")
+
+    let (map, start, finish) = parse_input(content);
+    let mut distances: Vec<usize> = vec![];
+    for s in start {
+        let result = dijkstra(&s, |n | n.neighbours(&map), |n| *n == finish);
+        match result {
+            Some(r) => distances.push(r.1),
+            None => (),
+        }
+    }
+
+    String::from(distances.iter().min().unwrap().to_string())
 }
 
 fn height_to_int(height: &char) -> usize {
@@ -66,11 +76,11 @@ fn height_to_int(height: &char) -> usize {
     height.to_digit(36).unwrap() as usize - 9
 }
 
-fn parse_input(content: &String) -> (Grid<usize>, Node, Node)  {
+fn parse_input(content: &String) -> (Grid<usize>, Vec<Node>, Node)  {
 
     let mut map: Grid<usize> = grid![[]];
     let mut row = 0;
-    let mut start: Node = Node(0, 0);
+    let mut start: Vec<Node> = vec![];
     let mut finish: Node = Node(0, 0);
 
     for line in content.lines() {
@@ -81,7 +91,10 @@ fn parse_input(content: &String) -> (Grid<usize>, Node, Node)  {
         for char in line.chars() {
             if char == 'S' {
                 heights.push(1);
-                start = Node(row, col);
+                start.insert(0, Node(row, col));
+            } else if char == 'a' {
+                heights.push(1);
+                start.push(Node(row, col));
             } else if char == 'E' {
                 heights.push(26);
                 finish = Node(row, col);
@@ -109,21 +122,12 @@ acctuvwj
 abdefghi"#)
 }
 
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(r#"
-
-"#)
-}
-
 #[test]
 fn test_task1() {
     assert_eq!(task1(&test_input()), "31");
-   //assert_eq!(task1(&test_input2()), "");
 }
 
 #[test]
 fn test_task2() {
-    //assert_eq!(task2(&test_input()), "");
-    //assert_eq!(task2(&test_input2()), "");
+    assert_eq!(task2(&test_input()), "29");
 }
