@@ -8,13 +8,21 @@ pub fn tasks(content: &String) -> (String, String) {
 
 fn task1(content: &String) -> String {
     let mut result = 0;
-    let (first, second) = parse_input(content);
+    let mut i = 0;
 
-    for i in 0..first.len() {
-        if correct_order(first[i].clone(), second[i].clone()) > 0 {
-            result += i + 1;
-            println!("Correct Order: {}", i + 1);
+    for input in content.split("\n\n") {
+        i += 1;
+        let (input_1, input_2) = input.split_once("\n").unwrap();
+
+        println!("\nTesting Nr. {}:\n{}\n{}", i, input_1, input_2);
+        let thing_1 = create_thing(String::from(input_1));
+        let thing_2 = create_thing(String::from(input_2.trim_end_matches("\n")));
+
+        if correct_order(thing_1, thing_2) > 0 {
+            result += i;
+            println!("{} is in correct order.", i);
         }
+
     }
 
     result.to_string()
@@ -72,7 +80,7 @@ fn create_thing(mut line: String) -> Thing {
 
 // Returns +1 if first element is smaller (correct order), 0 if equal, -1 if the first element is bigger
 fn correct_order(first: Thing, second: Thing) -> i32 {
-    println!("Comparing: {:?} & {:?}", first, second);
+    //println!("Comparing: {:?} & {:?}", first, second);
 
     match (first, second) {
         (Thing::Number(i), Thing::Number(j)) => {
@@ -81,7 +89,9 @@ fn correct_order(first: Thing, second: Thing) -> i32 {
         },
         (Thing::List(i), Thing::List(j)) => {
             //println!("Comparing Lists: {:?} & {:?}", i, j);
-            if i.len() == 0 { 
+            if i.len() == 0 && j.len() == 0 {
+                return 0
+            } else if i.len() == 0 { 
                 //println!("j.len == 0: True");
                 return 1;
             } else if j.len() == 0 {
@@ -120,27 +130,6 @@ fn correct_order(first: Thing, second: Thing) -> i32 {
         _ => panic!("This should never happen!"),
     }
 
-}
-
-fn parse_input(content: &String) -> (Vec<Thing>, Vec<Thing>) {
-    let mut first: Vec<Thing> = vec![];
-    let mut second: Vec<Thing> = vec![];
-    let mut i = 0;
-
-    for input in content.split("\n\n") {
-        println!("Inputs Nr. {}", i);
-        let (input_1, input_2) = input.split_once("\n").unwrap();
-        println!("Input 1: {}", input_1);
-        println!("Input 2: {}", input_2);
-        let thing_1 = create_thing(String::from(input_1));
-        let thing_2 = create_thing(String::from(input_2));
-        first.push(thing_1);
-        second.push(thing_2);
-        println!();
-        i+= 1;
-    }
-
-    (first, second)
 }
 
 #[cfg(test)]
@@ -217,6 +206,13 @@ fn test_create_strange_thing() {
         ]))
     ]);
     assert_eq!(create_thing(input), thing);
+}
+
+#[test]
+fn test_crate_compare_strange_thing() {
+    let t1 = create_thing(String::from("[[],[2,4,[[9,1,2,0,0]]],[[[0,8,2,5,5],2,1],[4]]]"));
+    let t2 = create_thing(String::from("[[9,4],[],[[[4,7],4],[[10,8]],[5,[6,2],[8],[]],[[2,9,7,7],8],[[5,8,9,7,5]]],[2,[9,[],[8,8,3,7,2],1,[10,9,8,1,8]],[],5,0],[[],9,[5,0,[2,5,2,10,8],2],[[1,4,7,7],10],7]]"));
+    assert_eq!(correct_order(t1, t2), 1)
 }
 
 #[test]
