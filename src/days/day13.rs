@@ -1,4 +1,6 @@
 use std::cmp;
+use std::cmp::Ordering;
+use log::debug;
 
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
@@ -14,13 +16,13 @@ fn task1(content: &String) -> String {
         i += 1;
         let (input_1, input_2) = input.split_once("\n").unwrap();
 
-        println!("\nTesting Nr. {}:\n{}\n{}", i, input_1, input_2);
+        debug!("\nTesting Nr. {}:\n{}\n{}", i, input_1, input_2);
         let thing_1 = create_thing(String::from(input_1));
         let thing_2 = create_thing(String::from(input_2.trim_end_matches("\n")));
 
-        if correct_order(thing_1, thing_2) > 0 {
+        if correct_order(&thing_1, &thing_2) == Ordering::Less {
             result += i;
-            println!("{} is in correct order.", i);
+            debug!("{} is in correct order.", i);
         }
 
     }
@@ -29,7 +31,20 @@ fn task1(content: &String) -> String {
 }
 
 fn task2(content: &String) -> String {
-    String::from("")
+    let mut packages : Vec<Thing> = vec![];
+
+    for line in content.lines() {
+        if line.len() == 0 {
+            continue
+        }
+        packages.push(create_thing(String::from(line)));
+    }
+    packages.push(create_thing(String::from("[[2]]")));
+    packages.push(create_thing(String::from("[[6]]")));
+
+    packages.sort_by(|a, b| correct_order(a, b));
+
+    decoder_keys(packages).to_string()
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -79,57 +94,81 @@ fn create_thing(mut line: String) -> Thing {
 }
 
 // Returns +1 if first element is smaller (correct order), 0 if equal, -1 if the first element is bigger
-fn correct_order(first: Thing, second: Thing) -> i32 {
+fn correct_order(first: &Thing, second: &Thing) -> Ordering {
     //println!("Comparing: {:?} & {:?}", first, second);
 
     match (first, second) {
         (Thing::Number(i), Thing::Number(j)) => {
             //println!("Comparing Numbers: {} & {}", i, j);
-            return (j - i).signum();
+            if i < j {
+                Ordering::Less
+            } else if i == j {
+                Ordering::Equal
+            } else {
+                Ordering::Greater
+            }
         },
         (Thing::List(i), Thing::List(j)) => {
             //println!("Comparing Lists: {:?} & {:?}", i, j);
             if i.len() == 0 && j.len() == 0 {
-                return 0
+                Ordering::Equal
             } else if i.len() == 0 { 
                 //println!("j.len == 0: True");
-                return 1;
+                Ordering::Less
             } else if j.len() == 0 {
                 //println!("i.len == 0: False");
-                return -1;
+                Ordering::Greater
             } else {
 
                 // Check each list element individually.
                 // If the order in one of the children is wrong, the whole order is wrong
                 for pos in 0..cmp::min(i.len(), j.len()) {
-                    let order = correct_order(*i[pos].clone(), *j[pos].clone());
-                    if order != 0 {
+                    let order = correct_order(&*i[pos].clone(), &*j[pos].clone());
+                    if order != Ordering::Equal {
                         return order;
                     }
                 }
 
                 // If there are remaining elements in the first list, the order is wrong
-                if i.len() > j.len() {
-                    return -1;
+                if i.len() < j.len() {
+                    return Ordering::Less;
+                } else if i.len() > j.len() {
+                    return Ordering::Greater
                 }
 
                 // Otherwise the order of the children is correct
-                return 1;
+                Ordering::Equal
             }
         },
         (Thing::Number(i), Thing::List(j)) => {
             //println!("Comparing Converted Number {} with List {:?}", i, j);
-            let i_list: Thing = Thing::List(vec![Box::new(Thing::Number(i))]);
-            return correct_order(i_list, Thing::List(j));
+            let i_list: Thing = Thing::List(vec![Box::new(Thing::Number(*i))]);
+            let j_list: Thing = Thing::List(j.to_vec());
+            return correct_order(&i_list, &j_list);
         },
         (Thing::List(i), Thing::Number(j)) => {
             //println!("Comparing List {:?} with converted number {}", i, j);
-            let j_list: Thing = Thing::List(vec![Box::new(Thing::Number(j))]);
-            return correct_order(Thing::List(i), j_list);
+            let i_list: Thing = Thing::List(i.to_vec());
+            let j_list: Thing = Thing::List(vec![Box::new(Thing::Number(*j))]);
+            return correct_order(&i_list, &j_list);
         },
         _ => panic!("This should never happen!"),
     }
 
+}
+
+fn decoder_keys(packages: Vec<Thing>) -> usize {
+    let mut result = 1;
+    for i in 0..packages.len() {
+        let decoder_1 = create_thing(String::from("[[2]]"));
+        let decoder_2 = create_thing(String::from("[[6]]"));
+        debug!("{:?}", packages[i]);
+        if packages[i] == decoder_1 || packages[i] == decoder_2 {
+            result *= i + 1;
+        }
+    }
+
+    result
 }
 
 #[cfg(test)]
@@ -159,23 +198,15 @@ fn test_input() -> String {
 [1,[2,[3,[4,[5,6,0]]]],8,9]"#)
 }
 
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(r#"
-
-"#)
-}
-
 #[test]
 fn test_task1() {
    assert_eq!(task1(&test_input()), "13");
 }
 
-/*#[test]
+#[test]
 fn test_task2() {
-    assert_eq!(task2(&test_input()), "");
-    assert_eq!(task2(&test_input2()), "");
-}*/
+    assert_eq!(task2(&test_input()), "140");
+}
 
 #[test]
 fn test_create_easy_thing() {
@@ -212,27 +243,27 @@ fn test_create_strange_thing() {
 fn test_crate_compare_strange_thing() {
     let t1 = create_thing(String::from("[[],[2,4,[[9,1,2,0,0]]],[[[0,8,2,5,5],2,1],[4]]]"));
     let t2 = create_thing(String::from("[[9,4],[],[[[4,7],4],[[10,8]],[5,[6,2],[8],[]],[[2,9,7,7],8],[[5,8,9,7,5]]],[2,[9,[],[8,8,3,7,2],1,[10,9,8,1,8]],[],5,0],[[],9,[5,0,[2,5,2,10,8],2],[[1,4,7,7],10],7]]"));
-    assert_eq!(correct_order(t1, t2), 1)
+    assert_eq!(correct_order(&t1, &t2), Ordering::Less)
 }
 
 #[test]
 fn test_compare_numbers() {
-    assert_eq!(correct_order(Thing::Number(1), Thing::Number(1)), 0);
-    assert_eq!(correct_order(Thing::Number(10), Thing::Number(20)), 1);
-    assert_eq!(correct_order(Thing::Number(20), Thing::Number(10)), -1);
+    assert_eq!(correct_order(&Thing::Number(1), &Thing::Number(1)), Ordering::Equal);
+    assert_eq!(correct_order(&Thing::Number(10), &Thing::Number(20)), Ordering::Less);
+    assert_eq!(correct_order(&Thing::Number(20), &Thing::Number(10)), Ordering::Greater);
 }
 
 #[test]
 fn test_compare_lists() {
-    assert_eq!(correct_order(Thing::List(vec![Box::new(Thing::List(vec![]))]), Thing::List(vec![])), -1);
-    assert_eq!(correct_order(Thing::List(vec![]), Thing::List(vec![Box::new(Thing::List(vec![]))])), 1);
+    assert_eq!(correct_order(&Thing::List(vec![Box::new(Thing::List(vec![]))]), &Thing::List(vec![])), Ordering::Greater);
+    assert_eq!(correct_order(&Thing::List(vec![]), &Thing::List(vec![Box::new(Thing::List(vec![]))])), Ordering::Less);
     assert_eq!(correct_order(
-        Thing::List(vec![]),
-        Thing::List(vec![Box::new(Thing::Number(3))])
-    ), 1);
+        &Thing::List(vec![]),
+        &Thing::List(vec![Box::new(Thing::Number(3))])
+    ), Ordering::Less);
     assert_eq!(correct_order(
-        Thing::List(vec![Box::new(Thing::Number(9))])
+        &Thing::List(vec![Box::new(Thing::Number(9))])
         , 
-        Thing::List(vec![Box::new(Thing::List(vec![Box::new(Thing::Number(8)), Box::new(Thing::Number(7))]))])
-    ), -1);
+        &Thing::List(vec![Box::new(Thing::List(vec![Box::new(Thing::Number(8)), Box::new(Thing::Number(7))]))])
+    ), Ordering::Greater);
 }
