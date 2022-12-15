@@ -40,7 +40,7 @@ fn task2(content: &String) -> String {
     
     // Increase Grid Size
     // We are setting this to a nice value to be still able to draw
-    let grow: usize = 150;
+    let grow: usize = 145;
     for _ in 0..grow {
         cave.push_col(vec![Material::Air; cave.rows()]);
         cave.insert_col(0, vec![Material::Air; cave.rows()]);
