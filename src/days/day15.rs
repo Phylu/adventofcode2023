@@ -1,69 +1,65 @@
-use std::vec;
-
-use itertools::Itertools;
-use log::{debug, error};
+use std::{vec, cmp};
+use log::{debug, info};
 use regex::Regex;
 
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content, GOAL_ROW);
-    let result2 = task2(content);
+    let result2 = task2(content, MAX_ROW);
     return (result1, result2);
 }
 
 const GOAL_ROW: i32 = 2000000;
+const MAX_ROW: i32 = 4000000;
+
+#[derive(Debug, Clone, Copy)]
+struct Pos (i32, i32);
 
 fn task1(content: &String, goal_row: i32) -> String {
 
     let sensors = parse_input(content);
-    let mut no_beacons : Vec<i32> = vec![];
-    let mut goal_row_beacons : Vec<i32> = vec![];
+    let mut no_beacons : Vec<Pos> = vec![];
 
     for sensor in sensors {
         let mut p = positions_in_line(sensor.0, sensor.1, sensor.4, goal_row);
         no_beacons.append(&mut p);
-        if sensor.3 == goal_row {
-            goal_row_beacons.push(sensor.2)
-        }
     }
 
-    let mut result = 0;
+    no_beacons = merge_intervals(&mut no_beacons);
     debug!("No Beacons: {:?}", no_beacons);
-    debug!("Beacons: {:?}", goal_row_beacons);
-    for x in no_beacons.iter().unique() {
-        if !goal_row_beacons.contains(x) {
-            result += 1;
-        }
-    }
+
+    let result = no_beacons[0].1 - no_beacons[0].0;
 
     result.to_string()
 }
 
-fn task2(content: &String) -> String {
+fn task2(content: &String, max_row: i32) -> String {
 
     let sensors = parse_input(content);
-    let mut no_beacons : Vec<i32> = vec![];
-    let mut goal_row_beacons : Vec<i32> = vec![];
+    let mut distress_beacon = Pos(0, 0);
 
-    for sensor in sensors {
-        let mut p = positions_in_line(sensor.0, sensor.1, sensor.4, goal_row);
-        no_beacons.append(&mut p);
-        if sensor.3 == goal_row {
-            goal_row_beacons.push(sensor.2)
+    for i in 0..max_row {
+
+        let mut no_beacons : Vec<Pos> = vec![];
+    
+        for sensor in &sensors {
+            let mut p = positions_in_line(sensor.0, sensor.1, sensor.4, i);
+            no_beacons.append(&mut p);
+        }
+    
+        no_beacons = merge_intervals(&mut no_beacons);
+        debug!("No Beacons for row {}: {:?}", i, no_beacons);
+    
+        // We have two intervals that are not adjacent
+        if no_beacons.len() == 2 {
+            info!("There is an empty beacon spot in line: {}", i);
+            distress_beacon = Pos(no_beacons[0].1 + 1, i);
+            break
         }
     }
 
-    let mut result = 0;
-    debug!("No Beacons: {:?}", no_beacons);
-    debug!("Beacons: {:?}", goal_row_beacons);
-    for x in no_beacons.iter().unique() {
-        if !goal_row_beacons.contains(x) {
-            result += 1;
-        }
-    }
-
-    //result.to_string()
-
-    String::from("")
+    info!("Distress beacon is located at: {:?}", distress_beacon);
+    let result: i64 = distress_beacon.0 as i64 * 4000000 + distress_beacon.1 as i64;
+    result.to_string()
 }
 
 const SENSOR_STRING: &str = r"^Sensor at x=(?P<sx>-?\d+), y=(?P<sy>-?\d+): closest beacon is at x=(?P<bx>-?\d+), y=(?P<by>-?\d+)";
@@ -91,18 +87,31 @@ fn parse_input(content: &String) -> Vec<(i32, i32, i32, i32, i32)> {
     sensors
 }
 
-fn positions_in_line(sx: i32, sy: i32, sensor_distance: i32, goal_row: i32) -> Vec<i32> {
-    let mut pos: Vec<i32> = vec![];
-
+fn positions_in_line(sx: i32, sy: i32, sensor_distance: i32, goal_row: i32) -> Vec<Pos> {
     let steps_in_row = sensor_distance - (sy - goal_row).abs();
     if steps_in_row >= 0 {
-        for i in 0..steps_in_row + 1 {
-            pos.push(sx + i);
-            pos.push(sx - i);
+        return vec![Pos(sx - steps_in_row, sx + steps_in_row)];
+    }
+    vec![]
+}
+
+fn merge_intervals(intervals: &mut Vec<Pos>) -> Vec<Pos> {
+    intervals.sort_by(|a,b| a.0.cmp(&b.0));
+    
+    let mut result: Vec<Pos> = vec![];
+    result.push(intervals.remove(0));
+
+    for current in intervals {
+        let j = result.len() - 1;
+        // Current starting inside or next to the rightmost interval of our results
+        if current.0 <= result[j].1 + 1 {
+            result[j].1 = cmp::max(current.1, result[j].1);
+        } else {
+            result.push(*current);
         }
     }
 
-    pos
+    result
 }
 
 #[cfg(test)]
@@ -131,5 +140,5 @@ fn test_task1() {
 
 #[test]
 fn test_task2() {
-    assert_eq!(task2(&test_input()), "56000011");
+    assert_eq!(task2(&test_input(), 20), "56000011");
 }
