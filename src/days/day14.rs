@@ -1,6 +1,6 @@
 use std::{cmp, vec};
 use grid::{Grid, grid};
-use log::{debug, error};
+use log::debug;
 
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);

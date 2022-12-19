@@ -1,5 +1,3 @@
-use log::{debug, error};
-
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
     let result2 = task2(content);
