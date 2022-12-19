@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use grid::{grid, Grid};
 use log::{debug, trace};
 
@@ -8,6 +10,7 @@ pub fn tasks(content: &String) -> (String, String) {
 }
 
 const MAX_ROCKS: usize = 2022;
+const MAX_ROCKS_2: usize = 1000000000000;
 const ROCK_ORDER: [Shape; 5] = [
     Shape::Row,
     Shape::Plus,
@@ -53,7 +56,84 @@ fn task1(content: &String) -> String {
 }
 
 fn task2(content: &String) -> String {
-    String::from("")
+    let mut jumped_height: usize = 0;
+
+    let jet_pattern = read_input(content);
+    let mut jet_counter: usize = 0;
+    let mut cave: Grid<bool> = grid![];
+
+    // Jet Counter Position, Rock -> Height, #Rocks
+    let mut cycle_detector: HashMap<(usize, Rock, Vec<bool>), (usize, usize)> = HashMap::new();
+
+    let mut i: usize = 0;
+    while i < MAX_ROCKS_2 {
+        debug!("Rock {} falling", i);
+        let shape = &ROCK_ORDER[i % 5];
+        let mut rock = Rock::new(shape, height(&cave));
+
+        // Cycle Detection!
+
+        // Only start looking for a cycle if we have enough rows for a good state
+        if cave.rows() > 10 && jumped_height == 0 {
+            // Check for cycle
+            let mut cycle_rock = rock.clone();
+            for i in 0..cycle_rock.positions.len() {
+                cycle_rock.positions[i].0 -= height(&cave) + 3;
+            }
+            let grid_vec = cave.flatten();
+            let top_grid = grid_vec[grid_vec.len() - 10 * CAVE_WIDTH..].to_vec();
+
+            if cycle_detector.contains_key(&(jet_counter % jet_pattern.len(), cycle_rock.clone(), top_grid.clone())) {
+                let cycle = cycle_detector.get(&(jet_counter % jet_pattern.len(), cycle_rock.clone(), top_grid.clone())).unwrap();
+                let cycle_height = cycle.0;
+                let cycle_rocks = i - cycle.1;
+                let cycle_length = height(&cave) - cycle_height;
+                
+                println!("{} Rocks will produce Height {}", cycle_rocks, cycle_length);
+
+                // Set jumped height & bump i
+                let jumpable_rocks = MAX_ROCKS_2 / cycle_rocks;
+                println!("We are at i: {}. We can jump {} rocks", i, jumpable_rocks);
+
+                jumped_height = (jumpable_rocks - 1) * cycle_length;
+                i += (jumpable_rocks - 1) * cycle_rocks;
+
+                println!("i bumped to: {}. We have increased the tower size by {}", i, jumped_height);
+
+                draw(&cave);
+                
+            } else {
+                cycle_detector.insert((jet_counter % jet_pattern.len(), cycle_rock.clone(), top_grid.clone()), (height(&cave), i));
+            }
+        }
+
+
+        // Move Rock to the correct position
+        loop {
+            let direction = &jet_pattern[jet_counter % jet_pattern.len()];
+            if rock.move_possible(&cave, direction) {
+                rock = rock.move_in_direction(direction);
+            }
+            jet_counter += 1;
+
+            if rock.move_possible(&cave, &Direction::Down) {
+                rock = rock.move_in_direction(&Direction::Down);
+            } else {
+                // We can't go down anymore, so we continue to the next rock
+                break;
+            }
+        }
+
+        // Add final rock position to our grid
+        cave = place_rock(cave, rock);
+
+        i += 1;
+    }
+    
+    draw(&cave);
+    (height(&cave) + jumped_height).to_string()
+
+
 }
 
 #[derive(PartialEq, Debug)]
@@ -73,10 +153,10 @@ enum Direction {
 }
 
 // Pos(row, column)
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Pos(usize, usize);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Rock {
     positions: Vec<Pos>,
 }
@@ -247,6 +327,5 @@ fn test_task1() {
 
 #[test]
 fn test_task2() {
-    assert_eq!(task2(&test_input()), "");
-    assert_eq!(task2(&test_input2()), "");
+    assert_eq!(task2(&test_input()), "1514285714288");
 }
