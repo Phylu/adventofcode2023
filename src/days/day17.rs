@@ -89,16 +89,16 @@ fn task2(content: &String) -> String {
                 let cycle_rocks = i - cycle.1;
                 let cycle_length = height(&cave) - cycle_height;
                 
-                println!("{} Rocks will produce Height {}", cycle_rocks, cycle_length);
+                debug!("{} Rocks will produce Height {}", cycle_rocks, cycle_length);
 
                 // Set jumped height & bump i
-                let jumpable_rocks = MAX_ROCKS_2 / cycle_rocks;
-                println!("We are at i: {}. We can jump {} rocks", i, jumpable_rocks);
+                let jumpable_rocks = (MAX_ROCKS_2 - i) / cycle_rocks;
+                debug!("We are at i: {}. We can jump {} rocks", i, jumpable_rocks);
 
-                jumped_height = (jumpable_rocks - 1) * cycle_length;
-                i += (jumpable_rocks - 1) * cycle_rocks;
+                jumped_height = jumpable_rocks * cycle_length;
+                i += jumpable_rocks * cycle_rocks;
 
-                println!("i bumped to: {}. We have increased the tower size by {}", i, jumped_height);
+                debug!("i bumped to: {}. We have increased the tower size by {}", i, jumped_height);
 
                 draw(&cave);
                 
