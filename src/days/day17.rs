@@ -1,5 +1,5 @@
-use grid::{Grid, grid};
-use log::{debug, error};
+use grid::{grid, Grid};
+use log::{debug, trace};
 
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
@@ -8,38 +8,48 @@ pub fn tasks(content: &String) -> (String, String) {
 }
 
 const MAX_ROCKS: usize = 2022;
-const ROCK_ORDER: [Shape; 5] = [Shape::Row, Shape::Plus, Shape::L, Shape::Column, Shape::Block];
+const ROCK_ORDER: [Shape; 5] = [
+    Shape::Row,
+    Shape::Plus,
+    Shape::L,
+    Shape::Column,
+    Shape::Block,
+];
 const CAVE_WIDTH: usize = 7;
 
 fn task1(content: &String) -> String {
-
     let jet_pattern = read_input(content);
-    let jet_counter: usize = 0;
+    let mut jet_counter: usize = 0;
     let mut cave: Grid<bool> = grid![];
 
     for i in 0..MAX_ROCKS {
+        debug!("Rock {} falling", i);
         let shape = &ROCK_ORDER[i % 5];
         let mut rock = Rock::new(shape, height(&cave));
 
         // Move Rock to the correct position
         loop {
             let direction = &jet_pattern[jet_counter % jet_pattern.len()];
-            rock = rock.side(direction);
-            
-            // Check if down is even possible and exit if not.
-            //rock.down();
-            break
+            if rock.move_possible(&cave, direction) {
+                rock = rock.move_in_direction(direction);
+            }
+            jet_counter += 1;
+
+            if rock.move_possible(&cave, &Direction::Down) {
+                rock = rock.move_in_direction(&Direction::Down);
+            } else {
+                // We can't go down anymore, so we continue to the next rock
+                break;
+            }
         }
-        
-        // Add final rock position to our grid        
+
+        // Add final rock position to our grid
         cave = place_rock(cave, rock);
-
-        draw(&cave);
-        break
-
     }
-     
-    String::from("")
+    
+    draw(&cave);
+    height(&cave).to_string()
+
 }
 
 fn task2(content: &String) -> String {
@@ -59,6 +69,7 @@ enum Shape {
 enum Direction {
     Left,
     Right,
+    Down,
 }
 
 // Pos(row, column)
@@ -67,19 +78,39 @@ struct Pos(usize, usize);
 
 #[derive(Debug, Clone)]
 struct Rock {
-    positions: Vec<Pos>
+    positions: Vec<Pos>,
 }
 
 impl Rock {
     fn new(shape: &Shape, height: usize) -> Rock {
-        let mut rock = Rock {
-            positions: vec![],
-        };
+        let mut rock = Rock { positions: vec![] };
 
+        let x: usize = height + 3;
         match shape {
-            Shape::Row => {
-                let x = height + 3;
-                rock.positions = vec![Pos(x, 2), Pos(x, 3), Pos(x, 4), Pos(x, 5)]
+            Shape::Row => rock.positions = vec![Pos(x, 2), Pos(x, 3), Pos(x, 4), Pos(x, 5)],
+            Shape::Plus => {
+                rock.positions = vec![
+                    Pos(x, 3),
+                    Pos(x + 1, 2),
+                    Pos(x + 1, 3),
+                    Pos(x + 1, 4),
+                    Pos(x + 2, 3),
+                ]
+            }
+            Shape::L => {
+                rock.positions = vec![
+                    Pos(x, 2),
+                    Pos(x, 3),
+                    Pos(x, 4),
+                    Pos(x + 1, 4),
+                    Pos(x + 2, 4),
+                ]
+            }
+            Shape::Column => {
+                rock.positions = vec![Pos(x, 2), Pos(x + 1, 2), Pos(x + 2, 2), Pos(x + 3, 2)]
+            }
+            Shape::Block => {
+                rock.positions = vec![Pos(x, 2), Pos(x, 3), Pos(x + 1, 2), Pos(x + 1, 3)]
             }
             _ => {}
         }
@@ -87,32 +118,60 @@ impl Rock {
         rock
     }
 
-    fn side(self, direction: &Direction) -> Rock {
+    fn move_possible(&self, cave: &Grid<bool>, direction: &Direction) -> bool {
+        for p in self.clone().positions {
+            trace!(
+                "Checking Position {:?} for Direction {:?} on Grid {:?}",
+                p, direction, cave
+            );
+
+            match *direction {
+                Direction::Left => {
+                    if p.1 == 0 || (p.0 < cave.rows() && p.1 > 0 && cave[p.0][p.1 - 1]) {
+                        return false;
+                    }
+                }
+                Direction::Right => {
+                    if p.1 == CAVE_WIDTH - 1
+                        || (p.0 < cave.rows() && p.1 < cave.cols() && cave[p.0][p.1 + 1])
+                    {
+                        return false;
+                    }
+                }
+                Direction::Down => {
+                    if p.0 == 0 || (p.0 <= cave.rows() && cave[p.0 - 1][p.1]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
+    }
+
+    fn move_in_direction(self, direction: &Direction) -> Rock {
+        debug!("Move {:?}", direction);
         let mut new_rock = self.clone();
         for i in 0..self.positions.len() {
-
-            if (*direction == Direction::Left && self.positions[i].1 == 0) || 
-                (*direction == Direction::Right && self.positions[i].1 == CAVE_WIDTH) {
-                    // We are already at the edge. Don't move.
-                    return self;
+            match direction {
+                Direction::Left => {
+                    new_rock.positions[i].1 -= 1;
                 }
-
-            if *direction == Direction::Left {
-                new_rock.positions[i].1 -= 1;
-            } else if *direction == Direction::Right {
-                new_rock.positions[i].1 += 1;
+                Direction::Right => {
+                    new_rock.positions[i].1 += 1;
+                }
+                Direction::Down => {
+                    new_rock.positions[i].0 -= 1;
+                }
             }
         }
 
         new_rock
     }
-    
-    fn down(){}
 }
 
 fn read_input(content: &String) -> Vec<Direction> {
     let mut jet_pattern: Vec<Direction> = vec![];
-    
+
     for c in content.chars() {
         match c {
             '<' => jet_pattern.push(Direction::Left),
@@ -125,10 +184,9 @@ fn read_input(content: &String) -> Vec<Direction> {
 }
 
 fn place_rock(mut cave: Grid<bool>, rock: Rock) -> Grid<bool> {
-
     for p in rock.positions {
-        let additional_rows = p.0 + 1 - cave.rows();
-        if additional_rows > 0 {
+        if p.0 >= cave.rows() {
+            let additional_rows = p.0 + 1 - cave.rows();
             for _ in 0..additional_rows {
                 cave.push_row(vec![false; CAVE_WIDTH]);
             }
@@ -144,7 +202,7 @@ fn height(cave: &Grid<bool>) -> usize {
     for row in (0..cave.rows()).rev() {
         for col in 0..CAVE_WIDTH {
             if cave[row][col] {
-                return row;
+                return row + 1;
             }
         }
     }
@@ -167,15 +225,19 @@ fn draw(cave: &Grid<bool>) {
 
 #[cfg(test)]
 fn test_input() -> String {
-    String::from(r#">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>
-"#)
+    String::from(
+        r#">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>
+"#,
+    )
 }
 
 #[cfg(test)]
 fn test_input2() -> String {
-    String::from(r#"
+    String::from(
+        r#"
 
-"#)
+"#,
+    )
 }
 
 #[test]
