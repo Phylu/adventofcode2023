@@ -1,7 +1,5 @@
 use std::{collections::HashMap, vec, cmp};
-
-use itertools::min;
-use log::{debug, error};
+use log::{debug};
 
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
@@ -26,12 +24,12 @@ fn task2(content: &String) -> String {
     let len_x = 3 + max_pos.0 - min_pos.0;
     let len_y = 3 + max_pos.1 - min_pos.1;
     let len_z = 3 + max_pos.2 - min_pos.2;
-    println!("Len_x: {}, Len_y: {}, Len_z: {}", len_x, len_y, len_z);
+    debug!("Len_x: {}, Len_y: {}, Len_z: {}", len_x, len_y, len_z);
     let outside = 2 * (len_x * len_y + len_y * len_z + len_z * len_x);
 
     let fs = free_sides(bucket.clone());
 
-    println!("Cubes: {}, Outside: {}, Free Sides: {}", bucket.len(), outside, fs);
+    debug!("Cubes: {}, Outside: {}, Free Sides: {}", bucket.len(), outside, fs);
 
     (fs - outside).to_string()
 }
@@ -74,7 +72,7 @@ fn minmax(bucket: &HashMap<Cube, bool>) -> (Cube, Cube) {
         max_z = cmp::max(max_z, cube.2);
     }
 
-    println!("Min Pos: {}/{}/{}, Max Pos: {}/{}/{}", min_x, min_y, min_z, max_x, max_y, max_z);
+    debug!("Min Pos: {}/{}/{}, Max Pos: {}/{}/{}", min_x, min_y, min_z, max_x, max_y, max_z);
     (Cube(min_x, min_y, min_z), Cube(max_x, max_y, max_z))
 }
 
@@ -125,10 +123,8 @@ fn flood_fill(cube: Cube, boundary: HashMap<Cube, bool>, min_pos: Cube, max_pos:
         }
     }
 
-    println!("{:?}", bucket);
-    println!("{}", bucket.len());
-
-    //println!("{:?}", bucket);
+    debug!("{:?}", bucket);
+    debug!("{}", bucket.len());
     bucket
 }
 
