@@ -148,13 +148,6 @@ fn test_input() -> String {
     )
 }
 
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(r#"1,1,1
-2,1,1
-    "#)
-}
-
 #[test]
 fn test_task1() {
     assert_eq!(task1(&test_input()), "64");

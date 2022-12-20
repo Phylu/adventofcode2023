@@ -10,33 +10,27 @@ pub fn tasks(content: &String) -> (String, String) {
 
 fn task1(content: &String) -> String {
 
-    let (mut cave, min_x, max_x, max_y) = parse_input(content);
-    draw(&cave, min_x, max_x, max_y);
+    let (mut cave, min_x, max_y) = parse_input(content);
+    draw(&cave, min_x);
 
     let mut i = 0;
     loop {
-        let potential_cave = spawn_sand(cave.clone(), min_x, max_x, max_y);
+        let potential_cave = spawn_sand(cave.clone(), min_x, max_y);
         match potential_cave {
             Some(c) => cave = c,
             None => break,
         }
-        // draw(&cave, min_x, max_x, max_y);
         i += 1;
-
-        // TODO: Remove. For debugging only.
-        //if i == 50 {
-        //    break
-        //}
     }
 
-    draw(&cave, min_x, max_x, max_y);
+    draw(&cave, min_x);
 
     i.to_string()
 }
 
 fn task2(content: &String) -> String {
     
-    let (mut cave, mut min_x, mut max_x, mut max_y) = parse_input(content);
+    let (mut cave, mut min_x, mut max_y) = parse_input(content);
     
     // Increase Grid Size
     // We are setting this to a nice value to be still able to draw
@@ -46,22 +40,20 @@ fn task2(content: &String) -> String {
         cave.insert_col(0, vec![Material::Air; cave.rows()]);
     }
     min_x -= grow;
-    max_x += grow;
 
     cave.push_row(vec![Material::Air; cave.cols()]);
     cave.push_row(vec![Material::Rock; cave.cols()]);
     max_y += 2;
 
-    draw(&cave, min_x, max_x, max_y);
+    draw(&cave, min_x);
 
     let mut i = 0;
     loop {
-        let potential_cave = spawn_sand(cave.clone(), min_x, max_x, max_y);
+        let potential_cave = spawn_sand(cave.clone(), min_x, max_y);
         match potential_cave {
             Some(c) => cave = c,
             None => break,
         }
-        //draw(&cave, min_x, max_x, max_y);
         i += 1;
 
         if cave[HOLE.1][HOLE.0 - min_x] == Material::Sand {
@@ -69,7 +61,7 @@ fn task2(content: &String) -> String {
         }
     }
 
-    draw(&cave, min_x, max_x, max_y);
+    draw(&cave, min_x);
 
     i.to_string()
 
@@ -86,7 +78,7 @@ enum Material {
     Hole
 }
 
-fn parse_input(content: &String) -> (Grid<Material>, usize, usize, usize) {
+fn parse_input(content: &String) -> (Grid<Material>, usize, usize) {
     let mut rocks: Vec<(usize, usize)> = vec![];
     let mut min_x = usize::MAX;
     let mut max_x = 0;
@@ -145,10 +137,10 @@ fn parse_input(content: &String) -> (Grid<Material>, usize, usize, usize) {
         cave.push_row(row);
     }
 
-    return (cave, min_x, max_x, max_y);
+    return (cave, min_x, max_y);
 }
 
-fn spawn_sand(mut cave: Grid<Material>, min_x: usize, max_x: usize, max_y: usize) -> Option<Grid<Material>> {
+fn spawn_sand(mut cave: Grid<Material>, min_x: usize, max_y: usize) -> Option<Grid<Material>> {
 
     // Spawn new Sand
     let mut sand_pos = HOLE;
@@ -160,7 +152,7 @@ fn spawn_sand(mut cave: Grid<Material>, min_x: usize, max_x: usize, max_y: usize
         first_drop = false;
 
         sand_pos_prev = sand_pos;
-        let potenial_sand_pos = move_sand(&cave, sand_pos, min_x, max_x, max_y);
+        let potenial_sand_pos = move_sand(&cave, sand_pos, min_x, max_y);
         match potenial_sand_pos {
             Some(p) => sand_pos = p,
             None => return None
@@ -171,7 +163,7 @@ fn spawn_sand(mut cave: Grid<Material>, min_x: usize, max_x: usize, max_y: usize
     Some(cave)
 }
 
-fn move_sand(cave: &Grid<Material>, sand_pos: (usize, usize), min_x: usize, max_x: usize, max_y: usize) -> Option<(usize, usize)> {
+fn move_sand(cave: &Grid<Material>, sand_pos: (usize, usize), min_x: usize, max_y: usize) -> Option<(usize, usize)> {
 
     let grid_x = sand_pos.0 - min_x;
     let grid_y = sand_pos.1;
@@ -222,7 +214,7 @@ fn is_air(cave: &Grid<Material>, grid_x: usize, grid_y: usize) -> bool {
     cave[grid_y][grid_x] == Material::Air
 }
 
-fn draw(cave: &Grid<Material>, min_x: usize, max_x: usize, max_y: usize) {
+fn draw(cave: &Grid<Material>, min_x: usize) {
     for cc in 0..3 {
         print!("  ");
         for c in 0..cave.cols() {
@@ -278,13 +270,6 @@ fn get_rocks(x: usize, y: usize, xn: usize, yn: usize) -> Vec<(usize, usize)> {
 fn test_input() -> String {
     String::from(r#"498,4 -> 498,6 -> 496,6
 503,4 -> 502,4 -> 502,9 -> 494,9
-"#)
-}
-
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(r#"
-
 "#)
 }
 

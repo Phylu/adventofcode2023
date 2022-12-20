@@ -152,7 +152,6 @@ fn correct_order(first: &Thing, second: &Thing) -> Ordering {
             let j_list: Thing = Thing::List(vec![Box::new(Thing::Number(*j))]);
             return correct_order(&i_list, &j_list);
         },
-        _ => panic!("This should never happen!"),
     }
 
 }

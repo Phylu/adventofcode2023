@@ -167,7 +167,9 @@ impl Rock {
 
         let x: usize = height + 3;
         match shape {
-            Shape::Row => rock.positions = vec![Pos(x, 2), Pos(x, 3), Pos(x, 4), Pos(x, 5)],
+            Shape::Row => {
+                rock.positions = vec![Pos(x, 2), Pos(x, 3), Pos(x, 4), Pos(x, 5)];
+            },
             Shape::Plus => {
                 rock.positions = vec![
                     Pos(x, 3),
@@ -176,7 +178,7 @@ impl Rock {
                     Pos(x + 1, 4),
                     Pos(x + 2, 3),
                 ]
-            }
+            },
             Shape::L => {
                 rock.positions = vec![
                     Pos(x, 2),
@@ -185,14 +187,13 @@ impl Rock {
                     Pos(x + 1, 4),
                     Pos(x + 2, 4),
                 ]
-            }
+            },
             Shape::Column => {
                 rock.positions = vec![Pos(x, 2), Pos(x + 1, 2), Pos(x + 2, 2), Pos(x + 3, 2)]
-            }
+            },
             Shape::Block => {
                 rock.positions = vec![Pos(x, 2), Pos(x, 3), Pos(x + 1, 2), Pos(x + 1, 3)]
-            }
-            _ => {}
+            },
         }
 
         rock
@@ -307,15 +308,6 @@ fn draw(cave: &Grid<bool>) {
 fn test_input() -> String {
     String::from(
         r#">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>
-"#,
-    )
-}
-
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(
-        r#"
-
 "#,
     )
 }
