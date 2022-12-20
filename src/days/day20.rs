@@ -18,7 +18,6 @@ fn task1(content: &String) -> String {
         
         // Only move the number if it has not been moved.
         if !numbers[i as usize].moved {
-            
 
             let mut current = numbers.remove(i as usize);    
             let new_position = (i + current.number).rem_euclid(numbers.len() as i64);            
@@ -51,52 +50,45 @@ fn task1(content: &String) -> String {
 
 fn task2(content: &String) -> String {
     let mut numbers = parse_input_2(content);
-    let mut i: i64 = 0;
-
+    
     debug!("Initial arrangement:");
     debug!("{:?}", numbers);
     
     for round in 0..10 {
 
-        while i < numbers.len() as i64 {
-            let mut j: i32 = 0;
+        for i in 0..(numbers.len() + 1) as i64 {
 
-            while j < numbers.len() as i32 {
+            for j in 0..numbers.len() as i64 {
 
                 if numbers[j as usize].position == i as i32 {
 
-                    let mut current = numbers.remove(i as usize);    
-                    let new_position = (i + current.number).rem_euclid(numbers.len() as i64);            
-                    current.moved = true;
-        
+                    debug!("{:?}", numbers);
+
+                    let current = numbers.remove(j as usize);
+                    let mut new_position = (j + current.number).rem_euclid(numbers.len() as i64);
                     if new_position == 0 && current.number.is_negative() {
-                        numbers.push(current);
-                    } else {
-                        numbers.insert(new_position as usize, current);
+                        new_position = numbers.len() as i64;
                     }
+
+                    debug!("Moving number {} at position {} to new position {} because initial position was {}.", current.number, j, new_position, i);        
+
+                    numbers.insert(new_position as usize, current);
                     
                     let modulo: i64 = numbers.len() as i64;
                     let current_number = numbers[new_position as usize].number;
                     let previous_number = numbers[(new_position - 1).rem_euclid(modulo) as usize].number;
                     let next_number = numbers[(new_position + 1).rem_euclid(modulo) as usize].number;
         
-                    debug!("{} moves between {} and {}:", current_number, previous_number, next_number);
+                    debug!("{} moves between {} and {}.\n", current_number, previous_number, next_number);
                     trace!("{:?}", numbers);
 
                     break
                 }
-
-                j += 1
             }
-    
-            i += 1;
         }
 
-        println!("After {} rounds of mixing: ", round + 1);
-        for n in numbers.clone() {
-            print!("{}, ", n);
-        }
-        println!();
+        debug!("After {} rounds of mixing: ", round + 1);
+        debug!("{:?}", numbers);
 
     }
 
@@ -152,8 +144,8 @@ fn parse_input(content: &String) -> Vec<Enumber> {
 
 fn parse_input_2(content: &String) -> Vec<Enumber> {
     let mut numbers: Vec<Enumber> = vec![];
+    let mut i = 0;
     for line in content.lines() {
-        let mut i = 0;
         if line.len() > 0 {
             let number: i64 = line.parse().unwrap();
             let enumber = Enumber {
@@ -181,13 +173,6 @@ fn test_input() -> String {
 "#)
 }
 
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(r#"
-
-"#)
-}
-
 #[test]
 fn test_task1() {
     assert_eq!(task1(&test_input()), "3");
@@ -195,6 +180,5 @@ fn test_task1() {
 
 #[test]
 fn test_task2() {
-    assert_eq!(task2(&test_input()), "");
-    assert_eq!(task2(&test_input2()), "");
+    assert_eq!(task2(&test_input()), "1623178306");
 }
