@@ -30,7 +30,7 @@ impl Node {
             }   
           }
 
-        // Lift  Node
+        // Left  Node
         if *y > 0 {
             if map[*x][*y-1] <= map[*x][*y] + 1 {
               neighbours.push((Node(*x, *y-1), 1));
