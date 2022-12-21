@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use log::{debug, error};
+use log::{debug, info};
 use regex::Regex;
 
 pub fn tasks(content: &String) -> (String, String) {
@@ -12,7 +12,7 @@ pub fn tasks(content: &String) -> (String, String) {
 fn task1(content: &String) -> String {
     let (mut monkeys, uncalculated_monkeys) = read_input(content);
 
-    monkeys = calculate_monkes(monkeys, uncalculated_monkeys);
+    monkeys = calculate_monkeys(monkeys, uncalculated_monkeys);
 
     let result = monkeys.get(&String::from("root")).unwrap().output.unwrap();
 
@@ -28,25 +28,50 @@ fn task2(content: &String) -> String {
     // Setup the Human Monkey
     let human_monkey = monkeys.get_mut(&human).unwrap();
     human_monkey.output = None;
-    
+
     // Setup the Root Monkey
-    let root_monkey = &monkeys.get(&root).unwrap();
-    let root_first_op = root_monkey.first_operand.as_ref().unwrap();
-    let root_second_op = root_monkey.second_operand.as_ref().unwrap();
+    let root_monkey = monkeys.get(&root).unwrap();
+    let root_first_op = root_monkey.first_operand.as_ref().unwrap().to_string();
+    let root_second_op = root_monkey.second_operand.as_ref().unwrap().to_string();
 
-    let uncalculated_monkeys_first = get_all_operands(monkeys.clone(), root_first_op.to_string());
-    let uncalculated_monkeys_second = get_all_operands(monkeys.clone(), root_second_op.to_string());
-    
+    let mut uncalculated_monkeys_first = get_all_operands(monkeys.clone(), root_first_op.clone());
+    let mut uncalculated_monkeys_second = get_all_operands(monkeys.clone(), root_second_op.clone());
+
+    debug!("Uncalc 1: {:?}", uncalculated_monkeys_first);
+    debug!("Uncalc 2: {:?}", uncalculated_monkeys_second);
+
     // Calculate first Root Tree
-    monkeys = calculate_monkes(monkeys, uncalculated_monkeys_first);
+    if uncalculated_monkeys_first.contains(&String::from("humn")) {
+        monkeys = calculate_monkeys(monkeys, uncalculated_monkeys_second.clone());
 
-    // Calculate second Root Tree
-    monkeys = calculate_monkes(monkeys, uncalculated_monkeys_second);
+        let goal_result = monkeys.get(&root_second_op.clone()).unwrap().output.unwrap();
+        monkeys.get_mut(&root_first_op.clone()).unwrap().output = Some(goal_result);
+    } else {
+        monkeys = calculate_monkeys(monkeys, uncalculated_monkeys_first.clone());
 
-    // monkeys.clone().get(root_first_op);
-    // first_root_monkey = monkeys.get(root_first_op).unwrap();
+        let goal_result = monkeys.get(&root_first_op.clone()).unwrap().output.unwrap();
+        monkeys.get_mut(&root_second_op.clone()).unwrap().output = Some(goal_result);
+    }
 
-    String::from("")
+    let first_result = monkeys
+        .get(&root_second_op.clone())
+        .unwrap()
+        .output
+        .unwrap();
+
+        info!("First Result for {}: {}", root_second_op.to_string(), first_result);
+
+    let mut all_uncalculated_monkeys: Vec<String> = vec![];
+    all_uncalculated_monkeys.append(&mut uncalculated_monkeys_first);
+    all_uncalculated_monkeys.append(&mut uncalculated_monkeys_second);
+    
+    while monkeys.get(&human).unwrap().output == None {
+        monkeys = calculate_monkeys_down(monkeys, all_uncalculated_monkeys.clone());
+        monkeys = calculate_monkeys(monkeys, all_uncalculated_monkeys.clone());
+    }
+
+    let result = monkeys.get(&human).unwrap().output.unwrap();
+    result.to_string()
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -63,7 +88,25 @@ impl Operation {
             Operation::Plus => op1 + op2,
             Operation::Minus => op1 - op2,
             Operation::Multiply => op1 * op2,
-            Operation::Divide => op1 / op2
+            Operation::Divide => op1 / op2,
+        }
+    }
+
+    fn solve_left(self, op1: i64, result: i64) -> i64 {
+        match self {
+            Operation::Plus => result - op1,
+            Operation::Minus => op1 - result,
+            Operation::Multiply => result / op1,
+            Operation::Divide => op1 / result,
+        }
+    }
+
+    fn solve_right(self, op2: i64, result: i64) -> i64 {
+        match self {
+            Operation::Plus => result - op2,
+            Operation::Minus => op2 + result,
+            Operation::Multiply => result / op2,
+            Operation::Divide => op2 * result,
         }
     }
 }
@@ -84,7 +127,6 @@ impl fmt::Display for Operation {
 
 #[derive(Debug, Clone)]
 struct Monkey {
-    name: String,
     first_operand: Option<String>,
     second_operand: Option<String>,
     operation: Option<Operation>,
@@ -92,22 +134,20 @@ struct Monkey {
 }
 
 fn get_all_operands(monkeys: HashMap<String, Monkey>, monkey: String) -> Vec<String> {
-    let mut operands: Vec<String> = vec![];
+    let mut operands: Vec<String> = vec![monkey.clone()];
 
     let current_monkey = monkeys.get(&monkey).unwrap();
 
     match current_monkey.first_operand.as_ref() {
         None => {}
-        Some(x) => { 
-            operands.push(x.to_string());
+        Some(x) => {
             operands.append(&mut get_all_operands(monkeys.clone(), x.to_string()));
         }
     }
 
     match current_monkey.second_operand.as_ref() {
         None => {}
-        Some(x) => { 
-            operands.push(x.to_string());
+        Some(x) => {
             operands.append(&mut get_all_operands(monkeys.clone(), x.to_string()));
         }
     }
@@ -134,7 +174,6 @@ fn read_input(content: &String) -> (HashMap<String, Monkey>, Vec<String>) {
             let output: i64 = captures["output"].parse().unwrap();
 
             let monkey = Monkey {
-                name: name.clone(),
                 first_operand: None,
                 second_operand: None,
                 operation: None,
@@ -157,7 +196,6 @@ fn read_input(content: &String) -> (HashMap<String, Monkey>, Vec<String>) {
             };
 
             let monkey = Monkey {
-                name: name.clone(),
                 first_operand: Some(first_operand),
                 second_operand: Some(second_operand),
                 operation: Some(operation),
@@ -172,7 +210,10 @@ fn read_input(content: &String) -> (HashMap<String, Monkey>, Vec<String>) {
     (monkeys, uncalculated_monkeys)
 }
 
-fn calculate_monkes(mut monkeys: HashMap<String, Monkey>, mut uncalculated_monkeys: Vec<String>) -> HashMap<String, Monkey> {
+fn calculate_monkeys(
+    mut monkeys: HashMap<String, Monkey>,
+    mut uncalculated_monkeys: Vec<String>,
+) -> HashMap<String, Monkey> {
     let mut no_change_rounds = 0;
 
     while uncalculated_monkeys.len() > 0 {
@@ -183,7 +224,12 @@ fn calculate_monkes(mut monkeys: HashMap<String, Monkey>, mut uncalculated_monke
 
         let current_name = uncalculated_monkeys.remove(0);
         let current = monkeys.get(&current_name).unwrap();
-        
+
+        // Already calculated, so we skip here
+        if current.output != None || current.first_operand == None || current.second_operand == None {
+            continue;
+        }
+
         let first_operand_name = current.first_operand.as_ref().unwrap();
         let second_operand_name = current.second_operand.as_ref().unwrap();
 
@@ -194,7 +240,16 @@ fn calculate_monkes(mut monkeys: HashMap<String, Monkey>, mut uncalculated_monke
             let op1 = first_operand_monkey.output.unwrap();
             let op2 = second_operand_monkey.output.unwrap();
             let output = current.operation.unwrap().operate(op1, op2);
-            debug!("{}:{} {} {}:{} = {}:{}", first_operand_name, op1, current.operation.unwrap(), second_operand_name, op2, current_name, output);
+            debug!(
+                "{}:{} {} {}:{} = {}:{}",
+                first_operand_name,
+                op1,
+                current.operation.unwrap(),
+                second_operand_name,
+                op2,
+                current_name,
+                output
+            );
 
             let mut current = monkeys.get_mut(&current_name).unwrap();
             current.output = Some(output);
@@ -203,6 +258,100 @@ fn calculate_monkes(mut monkeys: HashMap<String, Monkey>, mut uncalculated_monke
         } else {
             uncalculated_monkeys.push(current_name);
 
+            no_change_rounds += 1;
+        }
+    }
+
+    monkeys
+}
+
+fn calculate_monkeys_down(
+    mut monkeys: HashMap<String, Monkey>,
+    mut uncalculated_monkeys: Vec<String>,
+) -> HashMap<String, Monkey> {
+    let mut no_change_rounds = 0;
+    debug!("{:?}", uncalculated_monkeys);
+
+    while uncalculated_monkeys.len() > 0 {
+        // There is no more calculations that we can do, so we just return all the calculated monkeys that we have.
+        if no_change_rounds > uncalculated_monkeys.len() {
+            return monkeys;
+        }
+
+        let current_name = uncalculated_monkeys.remove(0);
+        let current = monkeys.get(&current_name).unwrap();
+
+        // Already calculated or does not need to calculate, so we skip here
+        if current.first_operand == None || current.second_operand == None || current_name == "humn".to_string() {
+            continue;
+        }
+
+        debug!("Working on the following monkeys: ");
+        debug!("{}, {:?}", current_name, current);
+        
+        let first_operand_name = current.first_operand.as_ref().unwrap().to_string();
+        let second_operand_name = current.second_operand.as_ref().unwrap().to_string();
+        
+        let first_operand_monkey = monkeys.get(&first_operand_name).unwrap();
+        let second_operand_monkey = monkeys.get(&second_operand_name).unwrap();
+        
+        debug!("{}, {:?}", first_operand_name, first_operand_monkey);
+        debug!("{}, {:?}", second_operand_name, second_operand_monkey);
+        
+        if current.output != None
+            && first_operand_monkey.output != None
+            && second_operand_monkey.output == None
+        {
+            let op1 = first_operand_monkey.output.unwrap();
+            let output = current.output.unwrap();
+            let op2 = current.operation.unwrap().solve_left(op1, output);
+            debug!(
+                "{}:{} {} {}:{} = {}:{}",
+                first_operand_name,
+                op1,
+                current.operation.unwrap(),
+                second_operand_name,
+                op2,
+                current_name,
+                output
+            );
+
+            let mut second = monkeys.get_mut(&second_operand_name).unwrap();
+            second.output = Some(op2);
+
+            if second_operand_name == "humn" {
+                info!("Human Calculated: {}", op2);
+            }
+
+            no_change_rounds = 0;
+        } else if current.output != None
+            && second_operand_monkey.output != None
+            && first_operand_monkey.output == None
+        {
+            let op2 = second_operand_monkey.output.unwrap();
+            let output = current.output.unwrap();
+            let op1 = current.operation.unwrap().solve_right(op2, output);
+            debug!(
+                "{}:{} {} {}:{} = {}:{}",
+                first_operand_name,
+                op1,
+                current.operation.unwrap(),
+                second_operand_name,
+                op2,
+                current_name,
+                output
+            );
+
+            let mut first = monkeys.get_mut(&first_operand_name).unwrap();
+            first.output = Some(op1);
+
+            if first_operand_name == "humn" {
+                info!("Human Calculated: {}", op1);
+            }
+
+            no_change_rounds = 0;
+        } else {
+            uncalculated_monkeys.push(current_name);
             no_change_rounds += 1;
         }
     }
