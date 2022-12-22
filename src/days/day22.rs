@@ -38,6 +38,11 @@ fn task1(content: &String) -> String {
 }
 
 fn task2(content: &String) -> String {
+
+
+    // We have 14 sides
+
+
     String::from("")
 }
 
