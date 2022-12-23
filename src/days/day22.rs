@@ -1,5 +1,4 @@
-use std::fmt;
-
+use std::fmt::{self, Error};
 use grid::{Grid, grid};
 use parse_display::{Display, FromStr};
 use log::{debug, trace};
@@ -90,8 +89,11 @@ impl fmt::Display for Facing {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+struct ParseFacingError;
+
 impl core::str::FromStr for Facing {
-    type Err;
+    type Err = ParseFacingError;
     
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -99,7 +101,7 @@ impl core::str::FromStr for Facing {
             ">" => Ok(Facing::Right),
             "v" => Ok(Facing::Bottom),
             "<" => Ok(Facing::Left),
-            _ => Err("Could not Parse Facing...")
+            _ => Err(ParseFacingError),
         }
     }
 
