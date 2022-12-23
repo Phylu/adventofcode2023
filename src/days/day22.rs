@@ -54,10 +54,12 @@ enum Tile {
     Open,
     #[display("#")]
     Wall,
+    #[display("@{0}{1}")]
+    Jumper(Pos, Direction)
 }
 
 
-#[derive(Debug, FromStr, Display)]
+#[derive(Debug, FromStr, Display, PartialEq, Eq)]
 enum Direction {
     #[display("{0}")]
     Steps(i32),
@@ -67,7 +69,7 @@ enum Direction {
     Right,
 }
 
-#[derive(Debug, RotateEnum, Clone, Copy)]
+#[derive(Debug, RotateEnum, Clone, Copy, PartialEq, Eq)]
 enum Facing {
     Top,
     Right,
@@ -86,6 +88,21 @@ impl fmt::Display for Facing {
         };
         write!(f, "{}", d)
     }
+}
+
+impl core::str::FromStr for Facing {
+    type Err;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "^" => Ok(Facing::Top),
+            ">" => Ok(Facing::Right),
+            "v" => Ok(Facing::Bottom),
+            "<" => Ok(Facing::Left),
+            _ => Err("Could not Parse Facing...")
+        }
+    }
+
 }
 
 impl Facing {
@@ -120,7 +137,9 @@ impl Facing {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display, FromStr)]
+#[display("{row}/{column}:{facing}")]
 struct Pos {
     row: i32,
     column: i32,
