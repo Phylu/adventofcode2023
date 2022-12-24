@@ -1,6 +1,6 @@
-use std::vec;
-
-use log::{debug, error};
+use std::{vec, collections::HashSet};
+use std::iter::FromIterator;
+use log::{debug};
 
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
@@ -44,27 +44,27 @@ fn task2(content: &String) -> String {
         Direction::West,
         Direction::East,
     ];
-    let mut rounds = -1;
-
-    draw(&new_positions);
+    let mut rounds = 0;
 
     while positions != new_positions {
+        // draw(&new_positions);
         rounds += 1;
         
         positions = new_positions.clone();
         
         let potential_positions = get_potential_positions(&new_positions, &directions);
         new_positions = move_to_new_positions(&new_positions, &potential_positions);
-        draw(&new_positions);
         
         let changed_direction = directions.remove(0);
         directions.push(changed_direction);
     }
+    
+    draw(&new_positions);
 
     rounds.to_string()
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 struct Pos {
     x: i32,
     y: i32,
@@ -83,7 +83,7 @@ impl Pos {
         Pos { x, y }
     }
 
-    fn any_neighbours(self, positions: &Vec<Pos>) -> bool {
+    fn any_neighbours(self, positions: &HashSet<&Pos>) -> bool {
         positions.contains(&Pos::new(self.x - 1, self.y - 1))
             || positions.contains(&Pos::new(self.x - 1, self.y))
             || positions.contains(&Pos::new(self.x - 1, self.y + 1))
@@ -94,7 +94,7 @@ impl Pos {
             || positions.contains(&Pos::new(self.x + 1, self.y + 1))
     }
 
-    fn walk(self, direction: &Direction, positions: &Vec<Pos>) -> Pos {
+    fn walk(self, direction: &Direction, positions: &HashSet<&Pos>) -> Pos {
         let mut new_pos = self.clone();
 
         match direction {
@@ -164,24 +164,25 @@ fn square_edges(positions: &Vec<Pos>) -> (i32, i32, i32, i32) {
         maxy = std::cmp::max(maxy, p.y);
     }
 
-    println!("{}/{} - {}/{}", minx, miny, maxx, maxy);
+    debug!("{}/{} - {}/{}", minx, miny, maxx, maxy);
 
     (minx, miny, maxx, maxy)
 }
 
 fn get_potential_positions(positions: &Vec<Pos>, directions: &Vec<Direction>) -> Vec<Pos> {
     let mut potential_positions: Vec<Pos> = vec![];
+    let positions_cache: HashSet<&Pos> = HashSet::from_iter(positions);
 
     for pos in positions {
-        if !pos.any_neighbours(&positions) {
+        if !pos.any_neighbours(&positions_cache) {
             // No Neighbors, So we are not moving.
-            println!("Elf at pos {:?} has no neighbors and does not move", pos);
+            debug!("Elf at pos {:?} has no neighbors and does not move", pos);
             potential_positions.push(*pos);
         } else {
             // We have a neighbour, so we try to move
             let mut new_pos = pos.clone();
             for direction in directions {
-                new_pos = pos.walk(direction, &positions);
+                new_pos = pos.walk(direction, &positions_cache);
                 if new_pos != *pos {
                     debug!(
                         "Elf at pos {:?} moves {:?} to {:?}",
@@ -268,6 +269,5 @@ fn test_task1() {
 
 #[test]
 fn test_task2() {
-    assert_eq!(task2(&test_input2()), "3");
     assert_eq!(task2(&test_input()), "20");
 }
