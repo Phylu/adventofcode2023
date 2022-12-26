@@ -1,8 +1,4 @@
-use std::{
-    collections::{HashSet},
-    hash::Hash,
-    str::FromStr,
-};
+use std::{collections::HashSet, hash::Hash, str::FromStr};
 
 use log::{debug, trace};
 use parse_display::{Display, FromStr};
@@ -160,6 +156,17 @@ fn task1(content: &String) -> String {
     debug!("Start: {}", start);
     debug!("End: {}", end);
 
+    let result = traverse(edges, start, end, blizzards);
+
+    result.0.to_string()
+}
+
+fn traverse(
+    edges: Pos,
+    start: Pos,
+    end: Pos,
+    blizzards: HashSet<Blizzard>,
+) -> (i32, HashSet<Blizzard>) {
     let mut result = 0;
 
     // State:
@@ -170,10 +177,8 @@ fn task1(content: &String) -> String {
         blizzards,
     }];
     let mut visited: HashSet<(Pos, i32)> = HashSet::new();
-
-    let mut i = 0;
+    let mut next_blizzards: HashSet<Blizzard> = HashSet::new();
     while result == 0 {
-        //while i < 1000 {
         // Get current state and add it to the states that have already been visited
         let current = queue.remove(0);
 
@@ -184,7 +189,7 @@ fn task1(content: &String) -> String {
         let next_time = current.time + 1;
 
         // Advance all blizards
-        let mut next_blizzards: HashSet<Blizzard> = HashSet::new();
+        next_blizzards = HashSet::new();
         for b in &current.blizzards {
             let newb = b.advance(edges);
             next_blizzards.insert(newb);
@@ -224,15 +229,24 @@ fn task1(content: &String) -> String {
             });
             visited.insert((current.pos, next_time));
         }
-
-        i += 1;
     }
 
-    result.to_string()
+    (result, next_blizzards)
 }
 
 fn task2(content: &String) -> String {
-    String::from("")
+    let (blizzards, edges) = read_input(content);
+    let start = Pos { x: 0, y: 1 };
+    let end = Pos {
+        x: edges.x,
+        y: edges.y - 1,
+    };
+
+    let (result1, blizzards1) = traverse(edges, start, end, blizzards);
+    let (result2, blizzards2) = traverse(edges, end, start, blizzards1);
+    let (result3, _) = traverse(edges, start, end, blizzards2);
+
+    (result1 + result2 + result3).to_string()
 }
 
 fn read_input(content: &String) -> (HashSet<Blizzard>, Pos) {
@@ -279,7 +293,7 @@ fn draw(edges: Pos, pos: Pos, blizzards: &HashSet<Blizzard>, start: Pos, end: Po
             let mut blizzard_count = 0;
             let mut blizzard_character = "";
 
-            if pos == (Pos { x, y}) {
+            if pos == (Pos { x, y }) {
                 print!("E");
                 continue;
             }
@@ -384,10 +398,10 @@ fn test_blizzards() {
 
 #[test]
 fn test_task1() {
-    assert_eq!(task1(&test_input()), "17");
+    assert_eq!(task1(&test_input()), "18");
 }
 
 #[test]
 fn test_task2() {
-    assert_eq!(task2(&test_input()), "");
+    assert_eq!(task2(&test_input()), "54");
 }
