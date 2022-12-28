@@ -1,4 +1,4 @@
-use std::fmt::{self, Error};
+use std::fmt;
 use grid::{Grid, grid};
 use parse_display::{Display, FromStr};
 use log::{debug, trace};
@@ -163,7 +163,7 @@ impl Pos {
         match direction {
             Direction::Steps(s) => {
                 let (add_rows, add_columns) = &self.facing.get_direction();
-                for i in 0..s {  
+                for _ in 0..s {  
                     let mut new_pos = pos.add(map, *add_rows, *add_columns);
                     while map[new_pos.row as usize][new_pos.column as usize] == Tile::None {
                         new_pos = new_pos.add(map, *add_rows, *add_columns);
@@ -214,7 +214,7 @@ fn parse_input(content: &String) -> (Grid<Tile>, Vec<Direction>) {
             let tile: Tile = c.to_string().parse().unwrap();
             tiles.push(tile);
         }
-        for i in tiles.len()..columns {
+        for _ in tiles.len()..columns {
             tiles.push(Tile::None);
         }
 
@@ -280,13 +280,6 @@ fn test_input() -> String {
         ......#.
 
 10R5L5R10L4R5L5
-"#)
-}
-
-#[cfg(test)]
-fn test_input2() -> String {
-    String::from(r#"
-
 "#)
 }
 

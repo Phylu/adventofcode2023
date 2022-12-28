@@ -114,13 +114,12 @@ impl Operation {
 impl fmt::Display for Operation {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut o = "";
-        match &self {
-            Operation::Plus => o = "+",
-            Operation::Minus => o = "-",
-            Operation::Multiply => o = "*",
-            Operation::Divide => o = "/",
-        }
+        let o = match &self {
+            Operation::Plus => "+",
+            Operation::Minus => "-",
+            Operation::Multiply => "*",
+            Operation::Divide => "/",
+        };
         write!(f, "{}", o)
     }
 }

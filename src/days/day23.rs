@@ -198,7 +198,7 @@ fn get_potential_positions(positions: &Vec<Pos>, directions: &Vec<Direction>) ->
     potential_positions
 }
 
-fn move_to_new_positions(mut positions: &Vec<Pos>, potential_positions: &Vec<Pos>) -> Vec<Pos> {
+fn move_to_new_positions(positions: &Vec<Pos>, potential_positions: &Vec<Pos>) -> Vec<Pos> {
     let mut new_positions: Vec<Pos> = vec![];
     for i in 0..positions.len() {
         let old_pos = positions[i];

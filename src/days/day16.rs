@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use indicatif::ProgressBar;
 
-use log::{debug, error};
+use log::{debug};
 
 use pathfinding::prelude::dijkstra;
 use regex::Regex;
@@ -162,7 +162,7 @@ fn best_path(valves: HashMap<String, Valve>, useful_valves: Vec<String>, distanc
         max_pressure
 }
 
-#[cfg(test)]
+/*#[cfg(test)]
 fn test_input() -> String {
     String::from(r#"Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
 Valve BB has flow rate=13; tunnels lead to valves CC, AA
@@ -175,7 +175,7 @@ Valve HH has flow rate=22; tunnel leads to valve GG
 Valve II has flow rate=0; tunnels lead to valves AA, JJ
 Valve JJ has flow rate=21; tunnel leads to valve II
 "#)
-}
+}*/
 
 #[test]
 fn test_task1() {

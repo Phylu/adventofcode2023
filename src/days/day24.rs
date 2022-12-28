@@ -270,6 +270,7 @@ fn read_input(content: &String) -> (HashSet<Blizzard>, Pos) {
     (blizzards, Pos { x: x - 1, y: y - 1 })
 }
 
+/*
 fn draw(edges: Pos, pos: Pos, blizzards: &HashSet<Blizzard>, start: Pos, end: Pos) {
     // First Line:
     print!("#");
@@ -280,7 +281,7 @@ fn draw(edges: Pos, pos: Pos, blizzards: &HashSet<Blizzard>, start: Pos, end: Po
         print!(".");
     }
 
-    for i in 0..(edges.y - 1) {
+    for _ in 0..(edges.y - 1) {
         print!("#");
     }
     println!();
@@ -356,6 +357,7 @@ fn draw(edges: Pos, pos: Pos, blizzards: &HashSet<Blizzard>, start: Pos, end: Po
 
     println!("#\n");
 }
+*/
 
 #[cfg(test)]
 fn test_input() -> String {

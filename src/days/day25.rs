@@ -1,6 +1,6 @@
 use std::vec;
 
-use log::{debug, error};
+use log::{debug};
 use radix::RadixNum;
 
 pub fn tasks(content: &String) -> (String, String) {
