@@ -1,5 +1,5 @@
 use indicatif::ProgressBar;
-use log::trace;
+use log::{debug, trace};
 use parse_display::{Display, FromStr};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
@@ -18,7 +18,7 @@ fn task1(content: &String) -> String {
     let blueprints = parse_input(content);
     for blueprint in blueprints {
         let res = solve(blueprint);
-        println!("Blueprint {} max geodes is {}", blueprint.number, res);
+        debug!("Blueprint {} max geodes is {} with quality {}", blueprint.number, res, res * blueprint.number);
         quality += res * blueprint.number;
     }
 
@@ -64,15 +64,14 @@ struct State {
 
 impl State {
     fn abort(self, best: State) -> bool {
-        false
-        //self.geode_robots * (MAX_ROUNDS - self.round) + self.geodes
-        //    < best.geode_robots * (MAX_ROUNDS - self.round) + best.geodes
+        self.geode_robots * (MAX_ROUNDS - self.round) + self.geodes
+            < best.geode_robots * (MAX_ROUNDS - self.round) + best.geodes
     }
 
     fn build_robot(self, blueprint: Blueprint, mat: Material) -> State {
         let mut new_state = self.clone();
 
-        let mut dore = 0;
+        let dore;
         let mut dclay = 0;
         let mut dobsidian = 0;
 
@@ -122,12 +121,12 @@ impl State {
 
         new_state.round += rounds;
 
-        //println!("{:?}", self);
-        //println!("Building: {}", mat);
-        //println!("Rounds until ore is ready: {}", ore_rounds);
-        //println!("Rounds until clay is ready: {}", clay_rounds);
-        //println!("Rounds until obsidian is ready: {}", obsidian_rounds);
-        //println!("Robot will be ready in round: {}", new_state.round);
+        trace!("{:?}", self);
+        trace!("Building: {}", mat);
+        trace!("Rounds until ore is ready: {}", ore_rounds);
+        trace!("Rounds until clay is ready: {}", clay_rounds);
+        trace!("Rounds until obsidian is ready: {}", obsidian_rounds);
+        trace!("Robot will be ready in round: {}", new_state.round);
 
         new_state.ore = self.ore + (rounds * self.ore_robots) - dore;
         new_state.clay = self.clay + (rounds * self.clay_robots) - dclay;
@@ -224,8 +223,8 @@ fn solve(blueprint: Blueprint) -> i32 {
         // Try to build an ore robot next as soon as possible
         // We don't need anymore if we are at full capacity
         if build.ore_robots < blueprint.cost_clay_robot_ore
-            && build.ore_robots < blueprint.cost_geode_robot_ore
-            && build.ore_robots < blueprint.cost_obsidian_robot_ore
+            || build.ore_robots < blueprint.cost_geode_robot_ore
+            || build.ore_robots < blueprint.cost_obsidian_robot_ore
         {
             let build_ore = build.build_robot(blueprint, Material::Ore);
 
@@ -238,7 +237,7 @@ fn solve(blueprint: Blueprint) -> i32 {
         }
 
         // Let's finish from this state when there can't be any robot build anymore
-        //if !robots_build {
+        if !robots_build {
             let rounds_until_finish = MAX_ROUNDS - build.round;
             let mut build_none = build.clone();
 
@@ -251,7 +250,7 @@ fn solve(blueprint: Blueprint) -> i32 {
             builds.push(build_none);
             all_builds.insert(build_none);
             bar.inc_length(1);
-        //}
+        }
     }
     bar.finish();
 
@@ -278,7 +277,7 @@ Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsid
 
 #[test]
 fn test_task1() {
-    assert_eq!(task1(&test_input()), "34");
+    assert_eq!(task1(&test_input()), "33");
 }
 
 #[test]
