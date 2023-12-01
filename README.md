@@ -1,5 +1,5 @@
-# adventofcode2022
+# adventofcode2023
 
-My solutions for the [Advent of Code 2022](https://adventofcode.com/) implemented in [Rust](https://www.rust-lang.org/).
+My solutions for the [Advent of Code 2023](https://adventofcode.com/) implemented in [Rust](https://www.rust-lang.org/).
 
-Note, that this is my first time ever working with rust, so there will be lots of optimizations possible.
+Note, that this is my ~~first~~ second time working with rust, so there will (still) be lots of optimizations possible.
