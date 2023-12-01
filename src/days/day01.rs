@@ -45,7 +45,7 @@ fn prepare_input_1(content: &String) -> Vec<i32> {
                 }
             }
 
-            println!("{}{}", current[0], current[1]);
+            // println!("{}{}", current[0], current[1]);
             vec.push(format!("{}{}", current[0], current[1]).parse().unwrap());
         }
     }
@@ -60,23 +60,20 @@ fn prepare_input_2(content: &String) -> Vec<i32> {
     for line in content.lines() {
         if line != "" {
 
-            // Custom replaces some where we could have issues
-            let line = line.replace("nineight", "9ight");
-            let line = line.replace("eightwo", "8wo");
-            let line = line.replace("eighthree", "8hree");
-            let line = line.replace("twone", "2ne");
+            // Duplicate the number string and place the literal digit in between
+            // in order to keep letters that appear in multiple numbers
+            // E.g. threeightwo = 382
+            let line = line.replace("one", "one1one");
+            let line = line.replace("two", "two2two");
+            let line = line.replace("three", "three3three");
+            let line = line.replace("four", "four4four");
+            let line = line.replace("five", "five5five");
+            let line = line.replace("six", "six6six");
+            let line = line.replace("seven", "seven7seven");
+            let line = line.replace("eight", "eight8eight");
+            let line = line.replace("nine", "nine9nine");
 
-            let line = line.replace("one", "1");
-            let line = line.replace("two", "2");
-            let line = line.replace("three", "3");
-            let line = line.replace("four", "4");
-            let line = line.replace("five", "5");
-            let line = line.replace("six", "6");
-            let line = line.replace("seven", "7");
-            let line = line.replace("eight", "8");
-            let line = line.replace("nine", "9");
-
-            println!("{}", line);
+            // println!("{}", line);
 
             let chars = line.chars();
 
@@ -99,7 +96,7 @@ fn prepare_input_2(content: &String) -> Vec<i32> {
                 }
             }
 
-            println!("{}{}", current[0], current[1]);
+            // println!("{}{}", current[0], current[1]);
             vec.push(format!("{}{}", current[0], current[1]).parse().unwrap());
         }
     }
