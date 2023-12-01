@@ -1,3 +1,4 @@
+
 pub fn tasks(content: &String) -> (String, String) {
     let result1 = task1(content);
     let result2 = task2(content);
@@ -5,51 +6,116 @@ pub fn tasks(content: &String) -> (String, String) {
 }
 
 fn task1(content: &String) -> String {
+    let vec = prepare_input_1(content);
+    let result: i32 = vec.iter().sum();
 
-    let vec = prepare_input(content);
-
-    return vec[vec.len()-1].to_string();
+    return result.to_string();
 }
 
 fn task2(content: &String) -> String {
+    let vec = prepare_input_2(content);
+    let result: i32 = vec.iter().sum();
 
-    let vec = prepare_input(content);
-
-    let top3 = &vec[vec.len()-3..vec.len()];
-    let sum: i32 = top3.iter().sum();
-
-    return sum.to_string();
-
+    return result.to_string();
 }
 
-fn prepare_input(content: &String) -> Vec<i32> {
+fn prepare_input_1(content: &String) -> Vec<i32> {
 
-    let mut current = 0;
     let mut vec = Vec::new();
 
     for line in content.lines() {
-        if line == "" {
-            vec.push(current);
-            current = 0;
-        } else {
-            let number : i32 = line.parse().unwrap();
-            current += number;
+        if line != "" {
+            let chars = line.chars();
+            let mut current: Vec<u32> = Vec::new();
+
+            // Forward Search
+            for character in chars.clone() {
+                let digit : Option<u32> = character.to_digit(10);
+                if digit.is_some() {
+                    current.push(digit.unwrap());
+                    break;
+                }
+            }
+            
+            for character in chars.clone().rev() {
+                let digit : Option<u32> = character.to_digit(10);
+                if digit.is_some() {
+                    current.push(digit.unwrap());
+                    break;
+                }
+            }
+
+            println!("{}{}", current[0], current[1]);
+            vec.push(format!("{}{}", current[0], current[1]).parse().unwrap());
         }
     }
-    vec.push(current);
     
-    vec.sort();
+    return vec;
+}
+
+fn prepare_input_2(content: &String) -> Vec<i32> {
+
+    let mut vec = Vec::new();
+
+    for line in content.lines() {
+        if line != "" {
+
+            // Custom replaces some where we could have issues
+            let line = line.replace("nineight", "9ight");
+            let line = line.replace("eightwo", "8wo");
+            let line = line.replace("eighthree", "8hree");
+            let line = line.replace("twone", "2ne");
+
+            let line = line.replace("one", "1");
+            let line = line.replace("two", "2");
+            let line = line.replace("three", "3");
+            let line = line.replace("four", "4");
+            let line = line.replace("five", "5");
+            let line = line.replace("six", "6");
+            let line = line.replace("seven", "7");
+            let line = line.replace("eight", "8");
+            let line = line.replace("nine", "9");
+
+            println!("{}", line);
+
+            let chars = line.chars();
+
+            let mut current: Vec<u32> = Vec::new();
+
+            // Forward Search
+            for character in chars.clone() {
+                let digit : Option<u32> = character.to_digit(10);
+                if digit.is_some() {
+                    current.push(digit.unwrap());
+                    break;
+                }
+            }
+            
+            for character in chars.clone().rev() {
+                let digit : Option<u32> = character.to_digit(10);
+                if digit.is_some() {
+                    current.push(digit.unwrap());
+                    break;
+                }
+            }
+
+            println!("{}{}", current[0], current[1]);
+            vec.push(format!("{}{}", current[0], current[1]).parse().unwrap());
+        }
+    }
+    
     return vec;
 }
 
 #[test]
 fn test_task1() {
-    let content = std::fs::read_to_string("input/1.txt").unwrap(); 
-    assert_eq!(task1(&content), "69289");
+    let content = std::fs::read_to_string("input_test/1_1.txt").unwrap(); 
+    assert_eq!(task1(&content), "142");
 }
+
 
 #[test]
 fn test_task2() {
-    let content = std::fs::read_to_string("input/1.txt").unwrap(); 
-    assert_eq!(task2(&content), "205615");
+    let content = std::fs::read_to_string("input_test/1_2.txt").unwrap(); 
+    assert_eq!(task2(&content), "281");
 }
