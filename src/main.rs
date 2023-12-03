@@ -24,8 +24,8 @@ fn main() {
 
     let tasks = match &args.day {
         &1 => days::day01::tasks,
-        /*&2 => days::day02::tasks,
-        &3 => days::day03::tasks,
+        &2 => days::day02::tasks,
+        /*&3 => days::day03::tasks,
         &4 => days::day04::tasks,
         &5 => days::day05::tasks,
         &6 => days::day06::tasks,
